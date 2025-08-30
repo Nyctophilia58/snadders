@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+import 'package:snadders/services/google_play_services.dart';
+import 'guest_page.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +21,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 FilledButton.icon(
                   onPressed: () {
-                    // TODO: Google sign-in logic
+                    GooglePlayServices.signIn();
                   },
                   icon: const Icon(Icons.login),
                   label: const Text("Sign in with Google"),
@@ -41,7 +37,11 @@ class _HomePageState extends State<HomePage> {
 
                 OutlinedButton(
                   onPressed: () {
-                    // TODO: guest mode
+                    // Navigate to guest play screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const GuestPage()),
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 56),
