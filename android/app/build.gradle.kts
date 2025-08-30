@@ -46,4 +46,5 @@ flutter {
 dependencies {
     implementation("com.google.android.gms:play-services-games-v2:+")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("androidx.appcompat:appcompat:1.7.1")
 }

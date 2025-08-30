@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
         body: FutureBuilder(
-          future: Future.delayed(const Duration(seconds: 3)),
+          future: Future.delayed(const Duration(seconds: 5)),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               return const HomePage();
