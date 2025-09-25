@@ -11,6 +11,26 @@ class GooglePlayServices {
     }
   }
 
+  static Future<bool> isSignedIn() async {
+    try {
+      final signedIn = await GamesServices.isSignedIn;
+      return signedIn;
+    } catch (e) {
+      debugPrint("Error checking sign-in status: $e");
+      return false;
+    }
+  }
+
+  static Future<String> getUsername() async {
+    try {
+      final player = await GamesServices.getPlayerName();
+      return player ?? "Player";
+    } catch (e) {
+      debugPrint("Error retrieving username: $e");
+      return "Player";
+    }
+  }
+
   static Future<void> showAchievements() async {
     try {
       await GamesServices.showAchievements();

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import 'package:snadders/pages/home_page.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:snadders/pages/splash_screen.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -11,47 +15,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: Scaffold(
-        body: FutureBuilder(
-          future: Future.delayed(const Duration(seconds: 5)),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return const HomePage();
-            } else {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.asset(
-                      'assets/animations/snake.json',
-                      repeat: true, // Loop the animation
-                      width: 250,
-                      height: 250,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Welcome to Snadders...',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const CircularProgressIndicator(),
-                  ],
-                ),
-              );
-            }
-          },
-        ),
-      ),
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: ThemeMode.system,
+      home: const SplashScreen(),
     );
   }
 }
