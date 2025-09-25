@@ -31,6 +31,7 @@ class _HomePageState extends State<HomePage>
   Timer? cooldownTimer;
   int remainingCooldown = 0;
   bool canSpin = true;
+  String profileImagePath = SharedPrefsService.defaultProfileImage;
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _HomePageState extends State<HomePage>
     _loadCoins();
     _loadDiamonds();
     _checkSpin();
+    _loadProfileImage();
     AdRewardService.loadRewardedAd();
     AdInterstitialService.loadInterstitialAd();
   }
@@ -80,6 +82,13 @@ class _HomePageState extends State<HomePage>
       _startCooldownTimer();
     }
     setState(() {});
+  }
+
+  Future<void> _loadProfileImage() async {
+    final image = await _sharedPrefsService.loadProfileImage();
+    setState(() {
+      profileImagePath = image;
+    });
   }
 
   Future<String> _getProfileImage() async {
@@ -157,7 +166,7 @@ class _HomePageState extends State<HomePage>
                               future: _getProfileImage(),
                               builder: (context, snapshot) {
                                 return ProfileAvatar(
-                                  imagePath: snapshot.data ?? 'assets/images/persons/person.jpg',
+                                  imagePath: profileImagePath,
                                   size: 40,
                                   onTap: () {
                                     showDialog(
@@ -165,11 +174,10 @@ class _HomePageState extends State<HomePage>
                                       builder: (context) => Dialog(
                                         backgroundColor: Colors.transparent,
                                         insetPadding: const EdgeInsets.all(16),
-                                        // child: StatisticsPage(username: widget.username, isGuest: widget.isGuest),
-                                        child: SettingsPage(),
+                                        child: StatisticsPage(username: widget.username, isGuest: widget.isGuest, imagePath: profileImagePath),
                                       ),
                                     ).then((_) {
-                                      setState(() {});
+                                      _loadProfileImage();
                                     });
                                   }
                                 );

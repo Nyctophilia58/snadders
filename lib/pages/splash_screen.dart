@@ -36,11 +36,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     final state = ref.read(signInProvider);
 
-    // // Save username if signed in
-    // if (state.signedIn) {
-    //   await _sharedPrefsService.saveUsername(state.username, isGuest: state.isGuest);
-    // }
-
     await Future.delayed(const Duration(seconds: 5));
 
     if (state.signedIn) {

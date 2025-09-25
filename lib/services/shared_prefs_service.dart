@@ -7,6 +7,7 @@ class SharedPrefsService {
   static const String _usernameKey = 'username';
   static const String _isGuestKey = 'isGuest';
 
+  static const String defaultProfileImage = 'assets/images/profiles/profile1.png';
   static const int defaultCoins = 500;
   static const int defaultDiamonds = 25;
 
@@ -115,6 +116,26 @@ class SharedPrefsService {
       return prefs.getBool(_isGuestKey) ?? true;
     } catch (e) {
       return true;
+    }
+  }
+
+  // load Profile image
+  Future<String> loadProfileImage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('profileImage') ?? defaultProfileImage;
+    } catch (e) {
+      return defaultProfileImage;
+    }
+  }
+
+  // Save profile image
+  Future<void> saveProfileImage(String imagePath) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profileImage', imagePath);
+    } catch (e) {
+      print('Error saving profile image: $e');
     }
   }
 
