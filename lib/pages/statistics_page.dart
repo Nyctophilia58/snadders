@@ -26,7 +26,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   final SharedPrefsService _sharedPrefsService = SharedPrefsService();
 
   final List<String> _profileImages = [
-    'assets/images/persons/person.jpg',
+    'assets/images/persons/01.png',
     'assets/images/tokens/black.png',
     'assets/images/tokens/green.png',
     'assets/images/tokens/red.png',

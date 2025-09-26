@@ -92,8 +92,9 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<String> _getProfileImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('profileImage') ?? 'assets/images/persons/person.jpg';
+    // Reload profile image in case it was changed
+    final image = await _sharedPrefsService.loadProfileImage();
+    return image;
   }
 
   void _startCooldownTimer() {
@@ -126,295 +127,309 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async => false,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.greenAccent, Colors.blueAccent],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-            SafeArea(
-              child: Column(
-                children: [
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.deepPurple, Colors.purpleAccent],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 6,
-                            offset: Offset(0, 3)),
-                      ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenHeight = constraints.maxHeight;
+          final bottomPadding = screenHeight * 0.02; // dynamic spacing
+          final lottieSize = screenHeight < 700 ? 40.0 : 60.0; // scale on small screens
+
+          return Scaffold(
+            body: Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.greenAccent, Colors.blueAccent],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+                  ),
+                ),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.deepPurple, Colors.purpleAccent],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 6,
+                                offset: Offset(0, 3)),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            FutureBuilder<String>(
-                              future: _getProfileImage(),
-                              builder: (context, snapshot) {
-                                return ProfileAvatar(
-                                  imagePath: profileImagePath,
-                                  size: 40,
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => Dialog(
-                                        backgroundColor: Colors.transparent,
-                                        insetPadding: const EdgeInsets.all(16),
-                                        child: StatisticsPage(username: widget.username, isGuest: widget.isGuest, imagePath: profileImagePath),
-                                      ),
-                                    ).then((_) {
-                                      _loadProfileImage();
-                                    });
-                                  }
-                                );
-                              }
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
                               children: [
-                                Text(
-                                  widget.username,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Row(
+                                FutureBuilder<String>(
+                                    future: _getProfileImage(),
+                                    builder: (context, snapshot) {
+                                      return ProfileAvatar(
+                                          imagePath: profileImagePath,
+                                          size: 40,
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => Dialog(
+                                                backgroundColor:
+                                                Colors.transparent,
+                                                insetPadding:
+                                                const EdgeInsets.all(16),
+                                                child: StatisticsPage(
+                                                    username: widget.username,
+                                                    isGuest: widget.isGuest,
+                                                    imagePath: profileImagePath),
+                                              ),
+                                            ).then((_) {
+                                              _loadProfileImage();
+                                            });
+                                          });
+                                    }),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.monetization_on,
-                                        color: Colors.yellow, size: 18),
-                                    const SizedBox(width: 4),
                                     Text(
-                                      coins.toString(),
-                                      style: const TextStyle(color: Colors.white),
+                                      widget.username,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.monetization_on,
+                                            color: Colors.yellow, size: 18),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          coins.toString(),
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ],
                             ),
+                            Row(
+                              children: [
+                                const Icon(Icons.diamond,
+                                    color: Colors.lightBlueAccent),
+                                const SizedBox(width: 4),
+                                Text(
+                                  diamonds.toString(),
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                                const SizedBox(width: 12),
+                                IconButton(
+                                  icon:
+                                  const Icon(Icons.store, color: Colors.white),
+                                  onPressed: () {},
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                        Row(
-                          children: [
-                            const Icon(Icons.diamond,
-                                color: Colors.lightBlueAccent),
-                            const SizedBox(width: 4),
-                            Text(
-                              diamonds.toString(),
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            const SizedBox(width: 12),
-                            IconButton(
-                              icon: const Icon(Icons.store, color: Colors.white),
-                              onPressed: () {},
-                            ),
-                          ],
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Column(
+                            children: [
+                              if (!widget.isGuest)
+                                const SizedBox(height: 60)
+                              else
+                                const SizedBox(height: 100),
+                              Image.asset(
+                                'assets/logo/foreground.png',
+                                width: 150,
+                                height: 150,
+                              ),
+                              const SizedBox(height: 20),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 20,
+                                runSpacing: 20,
+                                children: [
+                                  if (!widget.isGuest)
+                                    _buildButton(
+                                      'PLAY ONLINE',
+                                      Icons.people,
+                                          () {},
+                                    ),
+                                  if (!widget.isGuest)
+                                    _buildButton(
+                                      'PLAY WITH FRIENDS',
+                                      Icons.people,
+                                          () {},
+                                    ),
+                                  _buildButton(
+                                    'VS COMPUTER',
+                                    Icons.smart_toy,
+                                        () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PlayVsComputer(
+                                              username: widget.username),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  _buildButton(
+                                    'PASS N PLAY',
+                                    Icons.group,
+                                        () async {
+                                      final selectedPlayers =
+                                      await showPlayerSelectionDialog(
+                                          context);
+                                      if (selectedPlayers != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => PassNPlay(
+                                                selectedPlayers: selectedPlayers),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 30),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildSmallButton(
+                                      'Scores', Icons.emoji_events, () {}),
+                                  const SizedBox(width: 10),
+                                  _buildSmallButton(
+                                      'Settings', Icons.settings, () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => const Dialog(
+                                        backgroundColor: Colors.transparent,
+                                        insetPadding: EdgeInsets.all(16),
+                                        child: SettingsPage(),
+                                      ),
+                                    );
+                                  }),
+                                  const SizedBox(width: 10),
+                                  _buildSmallButton(
+                                      'Remove ADs', Icons.video_library, () {},
+                                      showFire: true),
+                                ],
+                              ),
+                              SizedBox(height: bottomPadding + 60), // extra space
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // free coins bottom left
+                Positioned(
+                  bottom: bottomPadding,
+                  left: 20,
+                  child: GestureDetector(
+                    child: Column(
+                      children: [
+                        Lottie.asset(
+                          'assets/animations/free_coins.json',
+                          repeat: true,
+                          width: lottieSize,
+                          height: lottieSize,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Free Coins',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 10,
+                                color: Colors.yellowAccent,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
+                    onTap: () async {
+                      bool adWatched = await AdRewardService.showRewardedAd();
+                      if (adWatched) {
+                        setState(() {
+                          coins += 10;
+                          _sharedPrefsService.saveCoins(coins);
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("You earned 10 coins!")),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("Ad not ready. Try again later.")),
+                        );
+                      }
+                    },
                   ),
-                  const SizedBox(height: 30),
-                  Expanded(
-                    child: Center(
-                      child: Column(
-                        children: [
-                          if (!widget.isGuest)
-                            const SizedBox(height: 60)
-                          else
-                            const SizedBox(height: 100),
-                          Image.asset(
-                            'assets/logo/foreground.png',
-                            width: 150,
-                            height: 150,
-                          ),
-                          const SizedBox(height: 20),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 20,
-                            runSpacing: 20,
-                            children: [
-                              if (!widget.isGuest)
-                                _buildButton(
-                                  'PLAY ONLINE',
-                                  Icons.people,
-                                      () {},
-                                ),
-                              if (!widget.isGuest)
-                                _buildButton(
-                                  'PLAY WITH FRIENDS',
-                                  Icons.people,
-                                      () {},
-                                ),
-                              _buildButton(
-                                'VS COMPUTER',
-                                Icons.smart_toy,
-                                    () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PlayVsComputer(
-                                          username: widget.username),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _buildButton(
-                                'PASS N PLAY',
-                                Icons.group,
-                                    () async {
-                                  final selectedPlayers =
-                                  await showPlayerSelectionDialog(context);
-                                  if (selectedPlayers != null) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PassNPlay(
-                                            selectedPlayers: selectedPlayers),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 30),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildSmallButton(
-                                  'Scores', Icons.emoji_events, () {}),
-                              const SizedBox(width: 10),
-                              _buildSmallButton('Settings', Icons.settings, () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => const Dialog(
-                                    backgroundColor: Colors.transparent,
-                                    insetPadding: EdgeInsets.all(16),
-                                    child: SettingsPage(),
-                                  ),
-                                );
-                              }),
-                              const SizedBox(width: 10),
-                              _buildSmallButton(
-                                'Remove ADs',
-                                Icons.video_library,
-                                () {},
-                                showFire: true
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // free coins bottom left
-            Positioned(
-              bottom: 20,
-              left: 20,
-              child: GestureDetector(
-                child: Column(
-                  children: [
-                    Lottie.asset(
-                      'assets/animations/free_coins.json',
-                      repeat: true,
-                      width: 50,
-                      height: 50,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Free Coins',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 10,
-                            color: Colors.yellowAccent,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
-                onTap: () async {
-                  bool adWatched = await AdRewardService.showRewardedAd();
-                  if (adWatched) {
-                    setState(() {
-                      coins += 10;
-                      _sharedPrefsService.saveCoins(coins);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("You earned 10 coins!")),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("Ad not ready. Try again later.")),
-                    );
-                  }
-                },
-              ),
-            ),
-            // spin wheel bottom right
-            Positioned(
-              bottom: 20,
-              right: 20,
-              child: GestureDetector(
-                onTap: () {
-                  if (canSpin) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => Dialog(
-                        backgroundColor: Colors.transparent,
-                        insetPadding: const EdgeInsets.all(16),
-                        child: Wheel(onSpinCompleted: _onSpinCompleted),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "Next spin available in ${_formatCooldown(remainingCooldown)} minutes",
+                // spin wheel bottom right
+                Positioned(
+                  bottom: bottomPadding,
+                  right: 20,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (canSpin) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => Dialog(
+                            backgroundColor: Colors.transparent,
+                            insetPadding: const EdgeInsets.all(16),
+                            child: Wheel(onSpinCompleted: _onSpinCompleted),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Next spin available in ${_formatCooldown(remainingCooldown)} minutes",
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: Column(
+                      children: [
+                        Lottie.asset(
+                          'assets/animations/spin_win.json',
+                          repeat: true,
+                          width: lottieSize,
+                          height: lottieSize,
                         ),
-                      ),
-                    );
-                  }
-                },
-                child: Column(
-                  children: [
-                    Lottie.asset(
-                      'assets/animations/spin_win.json',
-                      repeat: true,
-                      width: 60,
-                      height: 60,
+                        const SizedBox(width: 8),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

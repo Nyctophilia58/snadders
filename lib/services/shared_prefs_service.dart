@@ -7,7 +7,7 @@ class SharedPrefsService {
   static const String _usernameKey = 'username';
   static const String _isGuestKey = 'isGuest';
 
-  static const String defaultProfileImage = 'assets/images/profiles/profile1.png';
+  static const String defaultProfileImage = 'assets/images/persons/01.png';
   static const int defaultCoins = 500;
   static const int defaultDiamonds = 25;
 
