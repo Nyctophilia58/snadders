@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:snadders/services/google_play_services.dart';
+import 'package:snadders/services/shared_prefs_service.dart';
+import '../services/google_play_services.dart';
 
 // State class
 class SignInState {
@@ -21,6 +21,8 @@ class SignInState {
 
 // StateNotifier
 class SignInNotifier extends StateNotifier<SignInState> {
+  final SharedPrefsService _sharedPrefsService = SharedPrefsService();
+
   SignInNotifier() : super(SignInState(signedIn: false, username: ""));
 
   Future<void> checkSignInGoogle() async {
@@ -28,15 +30,16 @@ class SignInNotifier extends StateNotifier<SignInState> {
     String username = "";
     if (signedIn) {
       username = await GooglePlayServices.getUsername();
+      await _sharedPrefsService.saveUsername(username, isGuest: false);
     }
-    state = state.copyWith(signedIn: signedIn, username: username);
+    state = state.copyWith(signedIn: signedIn, username: username, isGuest: false);
   }
 
   Future<void> checkSignInGuest() async {
-    final prefs = await SharedPreferences.getInstance();
-    final guestSignedIn = prefs.getBool('guestSignedIn') ?? false;
-    if (guestSignedIn) {
-      final username = prefs.getString('guestUsername') ?? "Guest";
+    final isGuest = await _sharedPrefsService.loadIsGuest();
+    final username = await _sharedPrefsService.loadUsername();
+
+    if (isGuest && username != null) {
       state = state.copyWith(signedIn: true, username: username, isGuest: true);
     }
   }
@@ -44,5 +47,5 @@ class SignInNotifier extends StateNotifier<SignInState> {
 
 // Provider
 final signInProvider = StateNotifierProvider<SignInNotifier, SignInState>(
-    (ref) => SignInNotifier(),
+      (ref) => SignInNotifier(),
 );

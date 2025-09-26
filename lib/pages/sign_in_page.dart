@@ -126,7 +126,6 @@ class SignInPage extends StatelessWidget {
                                         content: TextField(
                                           onChanged: (value) {
                                             playerName = value;
-                                            _sharedPrefsService.saveUsername(playerName, isGuest: true);
                                           },
                                           decoration: const InputDecoration(
                                             hintText: "Username",
@@ -142,6 +141,7 @@ class SignInPage extends StatelessWidget {
                                           ElevatedButton(
                                             onPressed: () async {
                                               if (playerName.isNotEmpty) {
+                                                _sharedPrefsService.saveUsername(playerName, isGuest: true);
                                                 Navigator.pop(context);
                                                 // Navigate to HomePage as guest
                                                 Navigator.push(

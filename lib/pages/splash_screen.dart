@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import '../providers/sign_in_state_provider.dart';
-import '../services/shared_prefs_service.dart';
 import 'home_page.dart';
 import 'sign_in_page.dart';
 
@@ -14,7 +13,6 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  final SharedPrefsService _sharedPrefsService = SharedPrefsService();
 
   @override
   void initState() {
@@ -23,30 +21,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   void _initApp() async {
-    // Check sign-in status
     final signInNotifier = ref.read(signInProvider.notifier);
 
-    // First, try Google sign-in
+    // Check Google sign-in
     await signInNotifier.checkSignInGoogle();
 
-    // If not signed in with Google, check for guest sign-in
-    if(!ref.read(signInProvider).signedIn) {
+    // Check guest sign-in if not signed in with Google
+    if (!ref.read(signInProvider).signedIn) {
       await signInNotifier.checkSignInGuest();
     }
 
-    final state = ref.read(signInProvider);
-
+    // Splash screen delay
     await Future.delayed(const Duration(seconds: 5));
 
+    // Read updated state
+    final state = ref.read(signInProvider);
+
     if (state.signedIn) {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => HomePage(username: state.username, isGuest: state.isGuest),
         ),
       );
     } else {
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => SignInPage()),
       );
