@@ -126,10 +126,10 @@ class _WheelState extends State<Wheel> with SingleTickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.only(top: 20, left: 5),
         width: MediaQuery.of(context).size.width * 0.9,
-        height: MediaQuery.of(context).size.width * 0.8, // make it square for wheel
+        height: MediaQuery.of(context).size.width * 0.8,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/spinWheel/belt.png'), // ✅ belt image
+            image: AssetImage('assets/images/spinWheel/belt.png'),
             fit: BoxFit.contain,
           ),
         ),

@@ -6,6 +6,8 @@ class SharedPrefsService {
   static const String _lastSpinTimestampKey = 'last_spin_timestamp';
   static const String _usernameKey = 'username';
   static const String _isGuestKey = 'isGuest';
+  static const String _profileImageKey = 'profileImage';
+
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
   static const int defaultCoins = 500;
@@ -119,21 +121,22 @@ class SharedPrefsService {
     }
   }
 
-  // load Profile image
+// Load Profile image
   Future<String> loadProfileImage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('profileImage') ?? defaultProfileImage;
+      return prefs.getString(_profileImageKey) ?? defaultProfileImage;
     } catch (e) {
+      print('Error loading profile image: $e');
       return defaultProfileImage;
     }
   }
 
-  // Save profile image
+// Save Profile image
   Future<void> saveProfileImage(String imagePath) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profileImage', imagePath);
+      await prefs.setString(_profileImageKey, imagePath);
     } catch (e) {
       print('Error saving profile image: $e');
     }

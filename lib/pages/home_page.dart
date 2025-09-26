@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snadders/services/shared_prefs_service.dart';
 import 'package:snadders/widgets/profile/profile_avatar.dart';
 import '../game/pass_N_play.dart';
@@ -33,16 +32,32 @@ class _HomePageState extends State<HomePage>
   bool canSpin = true;
   String profileImagePath = SharedPrefsService.defaultProfileImage;
 
+  late String username;
+
   @override
   void initState() {
     super.initState();
+    username = widget.username;
     WidgetsBinding.instance.addObserver(this);
     _loadCoins();
     _loadDiamonds();
     _checkSpin();
     _loadProfileImage();
+    _loadUsername();
     AdRewardService.loadRewardedAd();
     AdInterstitialService.loadInterstitialAd();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Hide keyboard when app resumes
+      FocusManager.instance.primaryFocus?.unfocus();
+
+      _loadCoins();
+      _loadDiamonds();
+      _checkSpin();
+    }
   }
 
   @override
@@ -50,15 +65,6 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.removeObserver(this);
     cooldownTimer?.cancel();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _loadCoins();
-      _loadDiamonds();
-      _checkSpin();
-    }
   }
 
   Future<void> _loadCoins() async {
@@ -91,10 +97,17 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  Future<void> _loadUsername() async {
+    final savedUsername = await _sharedPrefsService.loadUsername();
+    if (savedUsername != null && savedUsername.isNotEmpty) {
+      setState(() {
+        username = savedUsername;
+      });
+    }
+  }
+
   Future<String> _getProfileImage() async {
-    // Reload profile image in case it was changed
-    final image = await _sharedPrefsService.loadProfileImage();
-    return image;
+    return await _sharedPrefsService.loadProfileImage();
   }
 
   void _startCooldownTimer() {
@@ -130,8 +143,8 @@ class _HomePageState extends State<HomePage>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final screenHeight = constraints.maxHeight;
-          final bottomPadding = screenHeight * 0.02; // dynamic spacing
-          final lottieSize = screenHeight < 700 ? 40.0 : 60.0; // scale on small screens
+          final bottomPadding = screenHeight * 0.02;
+          final lottieSize = screenHeight < 700 ? 40.0 : 60.0;
 
           return Scaffold(
             body: Stack(
@@ -184,12 +197,13 @@ class _HomePageState extends State<HomePage>
                                                 insetPadding:
                                                 const EdgeInsets.all(16),
                                                 child: StatisticsPage(
-                                                    username: widget.username,
-                                                    isGuest: widget.isGuest,
-                                                    imagePath: profileImagePath),
+                                                  username: username,
+                                                  isGuest: widget.isGuest,
+                                                ),
                                               ),
                                             ).then((_) {
                                               _loadProfileImage();
+                                              _loadUsername(); // reload username
                                             });
                                           });
                                     }),
@@ -198,7 +212,7 @@ class _HomePageState extends State<HomePage>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      widget.username,
+                                      username,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -232,8 +246,8 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 const SizedBox(width: 12),
                                 IconButton(
-                                  icon:
-                                  const Icon(Icons.store, color: Colors.white),
+                                  icon: const Icon(Icons.store,
+                                      color: Colors.white),
                                   onPressed: () {},
                                 ),
                               ],
@@ -281,8 +295,8 @@ class _HomePageState extends State<HomePage>
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => PlayVsComputer(
-                                              username: widget.username),
+                                          builder: (context) =>
+                                              PlayVsComputer(username: username),
                                         ),
                                       );
                                     },
@@ -298,8 +312,10 @@ class _HomePageState extends State<HomePage>
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => PassNPlay(
-                                                selectedPlayers: selectedPlayers),
+                                            builder: (context) =>
+                                                PassNPlay(
+                                                    selectedPlayers:
+                                                    selectedPlayers),
                                           ),
                                         );
                                       }
@@ -331,7 +347,7 @@ class _HomePageState extends State<HomePage>
                                       showFire: true),
                                 ],
                               ),
-                              SizedBox(height: bottomPadding + 60), // extra space
+                              SizedBox(height: bottomPadding + 60),
                             ],
                           ),
                         ),

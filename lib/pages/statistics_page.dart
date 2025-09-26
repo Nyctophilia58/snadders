@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:snadders/widgets/exit_button.dart';
 import 'package:snadders/widgets/profile/profile_avatar.dart';
-
 import '../services/shared_prefs_service.dart';
+import '../widgets/exit_button.dart';
 
 class StatisticsPage extends StatefulWidget {
   final String username;
   final bool isGuest;
-  final String imagePath;
 
   const StatisticsPage({
     super.key,
     required this.username,
     required this.isGuest,
-    required this.imagePath,
   });
 
   @override
@@ -21,22 +18,28 @@ class StatisticsPage extends StatefulWidget {
 }
 
 class _StatisticsPageState extends State<StatisticsPage> {
-  late String _selectedProfileImage = widget.imagePath;
+  late String _selectedProfileImage;
   late TextEditingController _usernameController;
   final SharedPrefsService _sharedPrefsService = SharedPrefsService();
 
-  final List<String> _profileImages = [
-    'assets/images/persons/01.png',
-    'assets/images/tokens/black.png',
-    'assets/images/tokens/green.png',
-    'assets/images/tokens/red.png',
-    'assets/images/tokens/yellow.png',
-  ];
+  final List<String> _profileImages = List.generate(
+    56,
+        (index) => 'assets/images/persons/${(index + 1).toString().padLeft(2, '0')}.png',
+  );
 
   @override
   void initState() {
     super.initState();
     _usernameController = TextEditingController(text: widget.username);
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    final savedImage = await _sharedPrefsService.loadProfileImage();
+    setState(() {
+      _selectedProfileImage =
+      (savedImage != null && savedImage.isNotEmpty) ? savedImage : _profileImages.first;
+    });
   }
 
   @override
@@ -56,9 +59,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
             child: GridView.builder(
               shrinkWrap: true,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+                crossAxisCount: 4,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
               ),
               itemCount: _profileImages.length,
               itemBuilder: (context, index) {
@@ -97,6 +100,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
+  void _saveUsername(String value) async {
+    if (value.isNotEmpty) {
+      await _sharedPrefsService.saveUsername(value, isGuest: widget.isGuest);
+      setState(() {}); // refresh UI
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -112,159 +122,168 @@ class _StatisticsPageState extends State<StatisticsPage> {
           borderRadius: BorderRadius.circular(16),
         ),
         padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text(
-              "Statistics",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                "Statistics",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: _showProfileImageSelector,
-              child: Column(
-                children: [
-                  ProfileAvatar(
-                    imagePath: _selectedProfileImage,
-                    size: 80,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Tap to change",
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: _showProfileImageSelector,
+                child: Column(
+                  children: [
+                    ProfileAvatar(
+                      imagePath: _selectedProfileImage,
+                      size: 80,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Tap to change",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                widget.isGuest
-                    ? SizedBox(
-                  width: 150,
-                  child: TextField(
-                    controller: _usernameController,
-                    textAlign: TextAlign.center,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  widget.isGuest
+                      ? SizedBox(
+                    width: 150,
+                    child: TextField(
+                      controller: _usernameController,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (value) {
+                        _saveUsername(value); // save on typing
+                      },
+                      onSubmitted: (value) {
+                        _saveUsername(value); // save on submit
+                      },
+                    ),
+                  )
+                      : Text(
+                    widget.username,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.deepPurple,
                     ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                    ),
-                    onSubmitted: (value) async {
-                      if (value.isNotEmpty) {
-                        await _sharedPrefsService.saveUsername(value, isGuest: true);
-                        setState(() {});
-                      }
-                    },
                   ),
-                )
-                    : Text(
-                  widget.username,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (widget.isGuest)
-                  const Icon(
-                    Icons.edit,
-                    color: Colors.deepPurple,
-                    size: 18,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.isGuest ? "Guest Player" : "Google Player",
-              style: TextStyle(
-                color: Colors.grey.withOpacity(0.8),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.all(12.0),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Your Game Statistics",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: 8),
+                  if (widget.isGuest)
+                    const Icon(
+                      Icons.edit,
                       color: Colors.deepPurple,
+                      size: 18,
                     ),
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Games Played:", style: TextStyle(fontSize: 14)),
-                      Text("0", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Games Won:", style: TextStyle(fontSize: 14)),
-                      Text("0", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Win Rate:", style: TextStyle(fontSize: 14)),
-                      Text("0%", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    ],
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.isGuest ? "Guest Player" : "Google Player",
+                style: TextStyle(
+                  color: Colors.grey.withOpacity(0.8),
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(12.0),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Your Game Statistics",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Games Played:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
+                        Text("0",
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Games Won:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
+                        Text("0",
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Win Rate:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
+                        Text("0%",
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ExitButton(onPressed: () => Navigator.pop(context)),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: const Text(
+                      "Continue",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ExitButton(onPressed: () => Navigator.pop(context)),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: const Text(
-                    "Continue",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

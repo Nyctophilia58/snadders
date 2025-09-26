@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:snadders/services/google_play_services.dart';
 import 'package:snadders/widgets/exit_button.dart';
 import '../services/shared_prefs_service.dart';
-import 'home_page.dart';
+import 'package:snadders/pages/home_page.dart';
 
 class SignInPage extends StatelessWidget {
   SignInPage({super.key});
