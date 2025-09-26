@@ -117,7 +117,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
       child: Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Colors.white, Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.greenAccent, Colors.lightBlueAccent]
           ),
           borderRadius: BorderRadius.circular(16),
         ),

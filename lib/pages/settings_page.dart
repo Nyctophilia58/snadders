@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/exit_button.dart';
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -9,12 +11,10 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool soundEnabled = true;
-  bool aiEnabled = false;
+  String selectedLanguage = 'English';
   String selectedBoard = 'Classic';
   final List<String> boardThemes = ['Classic', 'Ocean', 'Forest', 'Candy'];
-  String player1Token = 'Red';
-  String player2Token = 'Blue';
-  final List<String> tokenOptions = ['Red', 'Green', 'Blue', 'Yellow', 'Purple'];
+  final List<String> languages = ['English', 'Bangla'];
 
   @override
   Widget build(BuildContext context) {
@@ -51,123 +51,62 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 20),
 
-              // Player tokens
-              _buildPlayerSetting("Player 1", player1Token, (val) {
-                setState(() {
-                  player1Token = val;
-                });
-              }),
-              const SizedBox(height: 10),
-              _buildPlayerSetting("Player 2", player2Token, (val) {
-                setState(() {
-                  player2Token = val;
-                });
-              }),
-              const Divider(color: Colors.white54, height: 30),
-
-              // Board theme
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text("Board Theme",
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                children: boardThemes.map((theme) {
-                  bool selected = theme == selectedBoard;
-                  return ChoiceChip(
-                    label: Text(theme),
-                    selected: selected,
-                    onSelected: (_) {
-                      setState(() {
-                        selectedBoard = theme;
-                      });
-                    },
-                    selectedColor: Colors.white,
-                    backgroundColor: Colors.white.withOpacity(0.3),
-                    labelStyle: TextStyle(color: selected ? Colors.blueAccent : Colors.white),
-                  );
-                }).toList(),
-              ),
-              const Divider(color: Colors.white54, height: 30),
-
-              // Toggles
-              _buildToggle("Sound Effects", soundEnabled, (val) {
+              // Audio toggle
+              _buildToggle("Audio", soundEnabled, (val) {
                 setState(() {
                   soundEnabled = val;
                 });
               }),
-              const SizedBox(height: 10),
-              _buildToggle("Enable AI (2nd Player)", aiEnabled, (val) {
+              const SizedBox(height: 20),
+
+              // Language selection
+              _buildDropdown("Language", selectedLanguage, languages, (val) {
                 setState(() {
-                  aiEnabled = val;
+                  selectedLanguage = val;
+                });
+              }),
+              const SizedBox(height: 20),
+
+              // Board theme selection
+              _buildDropdown("Board Theme", selectedBoard, boardThemes, (val) {
+                setState(() {
+                  selectedBoard = val;
                 });
               }),
               const Divider(color: Colors.white54, height: 30),
 
-              // Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        // Reset settings
-                        soundEnabled = true;
-                        aiEnabled = false;
-                        selectedBoard = 'Classic';
-                        player1Token = 'Red';
-                        player2Token = 'Blue';
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text("Reset"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // close modal
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text("Close"),
-                  ),
-                ],
+              // Other options
+              _buildOption("Store", () {
+                // Navigate to store view
+              }),
+              _buildOption("Notifications", () {
+                // Open notifications settings
+              }),
+              _buildOption("Troubleshoot", () {
+                // Open troubleshooting guide
+              }),
+              _buildOption("Request Account Deletion", () {
+                // Handle account deletion request
+              }),
+              _buildOption("Rate Us", () {
+                // Open rate dialog or app store
+              }),
+              _buildOption("Share", () {
+                // Share app link
+              }),
+              _buildOption("Version: 1.0.0", null, showArrow: false),
+              const SizedBox(height: 20),
+
+              // Exit button
+              ExitButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPlayerSetting(String label, String selectedToken, ValueChanged<String> onChanged) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        DropdownButton<String>(
-          value: selectedToken,
-          dropdownColor: Colors.blueAccent,
-          items: tokenOptions
-              .map((token) => DropdownMenuItem(
-            value: token,
-            child: Text(token, style: const TextStyle(color: Colors.white)),
-          ))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) onChanged(value);
-          },
-          iconEnabledColor: Colors.white,
-        ),
-      ],
     );
   }
 
@@ -182,6 +121,38 @@ class _SettingsPageState extends State<SettingsPage> {
           onChanged: onChanged,
         ),
       ],
+    );
+  }
+
+  Widget _buildDropdown(
+      String label, String selected, List<String> options, ValueChanged<String> onChanged) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        DropdownButton<String>(
+          value: selected,
+          dropdownColor: Colors.blueAccent,
+          items: options
+              .map((val) => DropdownMenuItem(
+            value: val,
+            child: Text(val, style: const TextStyle(color: Colors.white)),
+          ))
+              .toList(),
+          onChanged: (value) {
+            if (value != null) onChanged(value);
+          },
+          iconEnabledColor: Colors.white,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOption(String label, VoidCallback? onTap, {bool showArrow = true}) {
+    return ListTile(
+      title: Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
+      trailing: showArrow ? const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16) : null,
+      onTap: onTap,
     );
   }
 }

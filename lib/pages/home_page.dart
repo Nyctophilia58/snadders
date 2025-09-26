@@ -49,18 +49,6 @@ class _HomePageState extends State<HomePage>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // Hide keyboard when app resumes
-      FocusManager.instance.primaryFocus?.unfocus();
-
-      _loadCoins();
-      _loadDiamonds();
-      _checkSpin();
-    }
-  }
-
-  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     cooldownTimer?.cancel();
@@ -343,8 +331,8 @@ class _HomePageState extends State<HomePage>
                                   }),
                                   const SizedBox(width: 10),
                                   _buildSmallButton(
-                                      'Remove ADs', Icons.video_library, () {},
-                                      showFire: true),
+                                    'Remove ADs', Icons.video_library, () {},
+                                    showFire: true),
                                 ],
                               ),
                               SizedBox(height: bottomPadding + 60),
