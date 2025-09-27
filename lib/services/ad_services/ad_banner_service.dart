@@ -1,6 +1,6 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:snadders/constants/ad_unit_ids.dart';
-import '../widgets/banner_ad_placing.dart';
+import '../../widgets/banner_ad_placing.dart';
 
 class AdBannerService {
   static BannerAd? _bannerAd;

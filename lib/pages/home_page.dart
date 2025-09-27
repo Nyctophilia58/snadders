@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:snadders/services/shared_prefs_service.dart';
-import 'package:snadders/widgets/profile/profile_avatar.dart';
+import '../pages/store_page.dart';
+import '../services/shared_prefs_service.dart';
+import '../widgets/profile/profile_avatar.dart';
 import '../game/pass_N_play.dart';
 import '../game/play_VS_computer.dart';
 import '../game/player_selection.dart';
-import '../services/ad_interstitial_service.dart';
-import '../services/ad_reward_service.dart';
+import '../services/ad_services/ad_interstitial_service.dart';
+import '../services/ad_services/ad_reward_service.dart';
 import '../pages/settings_page.dart';
 import '../pages/statistics_page.dart';
 import '../widgets/wheel/wheel.dart';
@@ -236,7 +237,12 @@ class _HomePageState extends State<HomePage>
                                 IconButton(
                                   icon: const Icon(Icons.store,
                                       color: Colors.white),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const StorePage()),
+                                    );
+                                  },
                                 ),
                               ],
                             ),

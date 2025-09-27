@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:snadders/widgets/profile/profile_avatar.dart';
+import '../widgets/profile/profile_avatar.dart';
 import '../services/shared_prefs_service.dart';
 import '../widgets/exit_button.dart';
 
@@ -38,7 +38,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     final savedImage = await _sharedPrefsService.loadProfileImage();
     setState(() {
       _selectedProfileImage =
-      (savedImage != null && savedImage.isNotEmpty) ? savedImage : _profileImages.first;
+      (savedImage.isNotEmpty) ? savedImage : _profileImages.first;
     });
   }
 

@@ -2,8 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:snadders/widgets/dice_roller.dart';
-import '../services/ad_banner_service.dart';
-import '../services/ad_interstitial_service.dart';
+import '../services/ad_services/ad_banner_service.dart';
+import '../services/ad_services/ad_interstitial_service.dart';
 import '../widgets/exit_button.dart';
 
 class PassNPlay extends StatefulWidget {

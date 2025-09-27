@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../widgets/exit_button.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -117,7 +116,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
         Switch(
           value: value,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           onChanged: onChanged,
         ),
       ],
