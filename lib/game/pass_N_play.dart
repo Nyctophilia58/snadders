@@ -5,11 +5,14 @@ import '../widgets/dice_roller.dart';
 import '../widgets/exit_button.dart';
 import '../services/ad_services/ad_banner_service.dart';
 import '../services/ad_services/ad_interstitial_service.dart';
+import 'data/ladders_data.dart';
+import 'data/snakes_data.dart';
 
 class PassNPlay extends StatefulWidget {
   final int selectedPlayers;
+  final int boardIndex;
 
-  const PassNPlay({super.key, required this.selectedPlayers});
+  const PassNPlay({super.key, required this.selectedPlayers, required this.boardIndex});
 
   @override
   State<PassNPlay> createState() => _PassNPlayState();
@@ -21,9 +24,8 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
   String? winner;
   late AnimationController _winnerAnimationController;
   late Animation<double> _winnerAnimation;
+  int get _boardNumber => widget.boardIndex + 1;
 
-  final Map<int, int> ladders = {8: 47, 16: 35, 21: 39, 41: 82, 51: 69, 65: 86};
-  final Map<int, int> snakes = {24: 17, 48: 31, 54: 45, 58: 37, 93: 53, 96: 63};
 
   final List<Color> playerColors = [
     Colors.green,
@@ -64,10 +66,10 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
 
       playerPositions[playerIndex] = newPosition;
 
-      if (ladders.containsKey(playerPositions[playerIndex])) {
-        playerPositions[playerIndex] = ladders[playerPositions[playerIndex]]!;
-      } else if (snakes.containsKey(playerPositions[playerIndex])) {
-        playerPositions[playerIndex] = snakes[playerPositions[playerIndex]]!;
+      if (ladders_1.containsKey(playerPositions[playerIndex])) {
+        playerPositions[playerIndex] = ladders_1[playerPositions[playerIndex]]!;
+      } else if (snakes_1.containsKey(playerPositions[playerIndex])) {
+        playerPositions[playerIndex] = snakes_1[playerPositions[playerIndex]]!;
       }
 
       if (playerPositions[playerIndex] == 100) {
@@ -279,7 +281,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                   return Stack(
                     children: [
                       SvgPicture.asset(
-                        'assets/images/boards/premium03.svg',
+                        'assets/images/boards/$_boardNumber.svg',
                         width: containerWidth,
                         height: containerHeight,
                         fit: BoxFit.contain,

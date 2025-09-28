@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../game/board_selection.dart';
 import '../pages/store_page.dart';
 import '../services/shared_prefs_service.dart';
 import '../widgets/profile/profile_avatar.dart';
@@ -172,30 +173,30 @@ class _HomePageState extends State<HomePage>
                             Row(
                               children: [
                                 FutureBuilder<String>(
-                                    future: _getProfileImage(),
-                                    builder: (context, snapshot) {
-                                      return ProfileAvatar(
-                                          imagePath: profileImagePath,
-                                          size: 40,
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => Dialog(
-                                                backgroundColor:
-                                                Colors.transparent,
-                                                insetPadding:
-                                                const EdgeInsets.all(16),
-                                                child: StatisticsPage(
-                                                  username: username,
-                                                  isGuest: widget.isGuest,
-                                                ),
-                                              ),
-                                            ).then((_) {
-                                              _loadProfileImage();
-                                              _loadUsername(); // reload username
-                                            });
-                                          });
-                                    }),
+                                  future: _getProfileImage(),
+                                  builder: (context, snapshot) {
+                                    return ProfileAvatar(
+                                      imagePath: profileImagePath,
+                                      size: 40,
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => Dialog(
+                                            backgroundColor:
+                                            Colors.transparent,
+                                            insetPadding:
+                                            const EdgeInsets.all(16),
+                                            child: StatisticsPage(
+                                              username: username,
+                                              isGuest: widget.isGuest,
+                                            ),
+                                          ),
+                                        ).then((_) {
+                                          _loadProfileImage();
+                                          _loadUsername(); // reload username
+                                        });
+                                      });
+                                  }),
                                 const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,36 +286,52 @@ class _HomePageState extends State<HomePage>
                                   _buildButton(
                                     'VS COMPUTER',
                                     Icons.smart_toy,
-                                        () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              PlayVsComputer(username: username),
-                                        ),
+                                    () async {
+                                      final selectedBoardIndex = await showDialog<int>(
+                                        context: context,
+                                        builder: (context) => const BoardSelector(),
                                       );
-                                    },
-                                  ),
-                                  _buildButton(
-                                    'PASS N PLAY',
-                                    Icons.group,
-                                        () async {
-                                      final selectedPlayers =
-                                      await showPlayerSelectionDialog(
-                                          context);
-                                      if (selectedPlayers != null) {
+
+                                      if (selectedBoardIndex != null) {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) =>
-                                                PassNPlay(
-                                                    selectedPlayers:
-                                                    selectedPlayers),
+                                            builder: (context) => PlayVsComputer(
+                                              username: username,
+                                              boardIndex: selectedBoardIndex,
+                                            ),
                                           ),
                                         );
                                       }
                                     },
                                   ),
+
+                                  _buildButton(
+                                    'PASS N PLAY',
+                                    Icons.group,
+                                    () async {
+                                      final selectedBoardIndex = await showDialog<int>(
+                                        context: context,
+                                        builder: (context) => const BoardSelector(),
+                                      );
+
+                                      if (selectedBoardIndex != null) {
+                                        final selectedPlayers = await showPlayerSelectionDialog(context);
+                                        if (selectedPlayers != null) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PassNPlay(
+                                                selectedPlayers: selectedPlayers,
+                                                boardIndex: selectedBoardIndex, // pass board number
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+
                                 ],
                               ),
                               const SizedBox(height: 30),
