@@ -23,8 +23,18 @@ class DiceRoller extends StatefulWidget {
 
 class _DiceRollerState extends State<DiceRoller> {
   final _audioPlayer = AudioPlayer();
-  var diceNum = 1;
+  int diceNum = 1;
   bool isRolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoRoll) {
+      Future.delayed(widget.delay ?? const Duration(milliseconds: 500), () {
+        rollDice();
+      });
+    }
+  }
 
   Future<void> rollDice() async {
     if (isRolling) return;
@@ -60,18 +70,12 @@ class _DiceRollerState extends State<DiceRoller> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: widget.autoRoll ? null : rollDice,
-          child: Image.asset(
-            'assets/images/dice/$diceNum.png',
-            width: 60,
-            height: 60,
-          ),
-        ),
-      ],
+    return GestureDetector(
+      onTap: widget.autoRoll ? null : rollDice,
+      child: Image.asset(
+        'assets/images/dice/$diceNum.png',
+        fit: BoxFit.cover,
+      ),
     );
   }
 }
