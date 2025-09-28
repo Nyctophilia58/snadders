@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../widgets/offers/boards_tab.dart';
-import '../widgets/offers/coins_tab.dart';
-import '../widgets/offers/diamonds_tab.dart';
-import '../widgets/offers/offers_tab.dart';
+import '../widgets/store/boards_tab.dart';
+import '../widgets/store/coins_tab.dart';
+import '../widgets/store/diamonds_tab.dart';
+import '../widgets/store/offers_tab.dart';
 
 class StorePage extends StatefulWidget {
   const StorePage({super.key});

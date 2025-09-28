@@ -43,6 +43,7 @@ dependencies:
   flame: ^1.32.0
   flutter_svg: ^2.2.1
   google_mobile_ads: ^6.0.0
+  in_app_purchase: ^3.2.3
 
 dev_dependencies:
   flutter_test:

@@ -174,6 +174,16 @@ class _WheelState extends State<Wheel> with SingleTickerProviderStateMixin {
       earnedValue = spinForCoins
           ? _coins[_coins.length - 1 - randomSectorIndex].toDouble()
           : _diamonds[_diamonds.length - 1 - randomSectorIndex].toDouble();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            spinForCoins
+                ? "You earned ${earnedValue.toInt()} coins!"
+                : "You earned ${earnedValue.toInt()} diamonds!",
+          ),          duration: const Duration(seconds: 2),
+        ),
+      );
     });
 
     await _prefs.saveLastSpinTimestamp(DateTime.now().millisecondsSinceEpoch);
