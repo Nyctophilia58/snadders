@@ -51,10 +51,19 @@ class _DiceRollerState extends State<DiceRoller> {
 
       if (timer.tick * 100 >= rollDuration.inMilliseconds) {
         timer.cancel();
-        setState(() => isRolling = false);
-        diceNum = randomizer.nextInt(6) + 1;
-        widget.onRolled(diceNum);
+
+        // Final dice face
+        setState(() {
+          isRolling = false;
+          diceNum = randomizer.nextInt(6) + 1;
+        });
+
+        // Give the UI a moment to display the final frame
+        Future.delayed(const Duration(seconds: 1), () {
+          widget.onRolled(diceNum);
+        });
       }
+
     });
   }
 

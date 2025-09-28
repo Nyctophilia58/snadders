@@ -78,11 +78,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   width: 280,
                   height: 280,
                 ),
-                Lottie.asset(
-                  'assets/animations/snake.json',
-                  repeat: true,
-                  width: 250,
-                  height: 250,
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/animations/snake.json',
+                      repeat: true,
+                      width: 250,
+                      height: 250,
+                    ),
+                    Positioned(
+                      right: 15,
+                      child: Image.asset(
+                        'assets/images/ladders/08.png',
+                        width: 170,
+                        height: 170,
+                      ),
+                    ),
+
+                    Positioned(
+                      bottom: 10,
+                      right: 25,
+                      child: Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.identity()..scale(-1.0, 1.0), // horizontal flip
+                        child: Lottie.asset(
+                          'assets/animations/dice.json',
+                          repeat: false,
+                          width: 170,
+                          height: 170,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
