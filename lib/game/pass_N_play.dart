@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:snadders/widgets/dice_roller.dart';
+import '../widgets/dice_roller.dart';
+import '../widgets/exit_button.dart';
 import '../services/ad_services/ad_banner_service.dart';
 import '../services/ad_services/ad_interstitial_service.dart';
-import '../widgets/exit_button.dart';
 
 class PassNPlay extends StatefulWidget {
   final int selectedPlayers;
@@ -17,7 +17,6 @@ class PassNPlay extends StatefulWidget {
 
 class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMixin {
   late List<int> playerPositions;
-  late List<int> playerDiceValues;
   int currentPlayerIndex = 0;
   String? winner;
   late AnimationController _winnerAnimationController;
@@ -27,24 +26,16 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
   final Map<int, int> snakes = {24: 17, 48: 31, 54: 45, 58: 37, 93: 53, 96: 63};
 
   final List<Color> playerColors = [
-    Colors.red,
     Colors.green,
+    Colors.red,
     Colors.yellow,
-    Colors.blueGrey
-  ];
-
-  final List<String> playerTokenPaths = [
-    'assets/images/tokens/red.png',
-    'assets/images/tokens/green.png',
-    'assets/images/tokens/yellow.png',
-    'assets/images/tokens/grey.png',
+    Colors.blue
   ];
 
   @override
   void initState() {
     super.initState();
     playerPositions = List<int>.filled(widget.selectedPlayers, 1);
-    playerDiceValues = List<int>.filled(widget.selectedPlayers, 1);
     _winnerAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -61,24 +52,26 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
     super.dispose();
   }
 
-  void handleDiceRoll(int dice) {
-    if (winner != null) return;
+  void handleDiceRoll(int playerIndex, int dice) {
+    if (winner != null || currentPlayerIndex != playerIndex) return;
+
     setState(() {
-      int newPosition = playerPositions[currentPlayerIndex] + dice;
+      int newPosition = playerPositions[playerIndex] + dice;
       if (newPosition > 100) {
         currentPlayerIndex = (currentPlayerIndex + 1) % widget.selectedPlayers;
         return;
       }
-      playerPositions[currentPlayerIndex] = newPosition;
 
-      if (ladders.containsKey(playerPositions[currentPlayerIndex])) {
-        playerPositions[currentPlayerIndex] = ladders[playerPositions[currentPlayerIndex]]!;
-      } else if (snakes.containsKey(playerPositions[currentPlayerIndex])) {
-        playerPositions[currentPlayerIndex] = snakes[playerPositions[currentPlayerIndex]]!;
+      playerPositions[playerIndex] = newPosition;
+
+      if (ladders.containsKey(playerPositions[playerIndex])) {
+        playerPositions[playerIndex] = ladders[playerPositions[playerIndex]]!;
+      } else if (snakes.containsKey(playerPositions[playerIndex])) {
+        playerPositions[playerIndex] = snakes[playerPositions[playerIndex]]!;
       }
 
-      if (playerPositions[currentPlayerIndex] == 100) {
-        winner = 'Player ${currentPlayerIndex + 1}';
+      if (playerPositions[playerIndex] == 100) {
+        winner = 'Player ${playerIndex + 1}';
         _winnerAnimationController.forward();
         _showWinnerDialog(winner!);
       } else {
@@ -98,7 +91,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
       backgroundColor: Colors.white,
       builder: (context) {
         return Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -114,6 +107,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
               const SizedBox(height: 20),
               if (AdBannerService.getBannerWidget() != null)
                 AdBannerService.getBannerWidget()!,
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -143,7 +137,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                     },
                   ),
                 ],
-              ),
+              )
             ],
           ),
         );
@@ -154,7 +148,6 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
   void _resetGame() {
     setState(() {
       playerPositions = List<int>.filled(widget.selectedPlayers, 1);
-      playerDiceValues = List<int>.filled(widget.selectedPlayers, 1);
       currentPlayerIndex = 0;
       winner = null;
       _winnerAnimationController.reset();
@@ -171,167 +164,157 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
   }
 
   Widget buildPlayerInfo(int playerIndex) {
-    Color color = playerColors[playerIndex];
     bool isCurrent = currentPlayerIndex == playerIndex && winner == null;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: Card(
-        elevation: isCurrent ? 8 : 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          width: 160,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color.withOpacity(0.1), color.withOpacity(0.3)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isCurrent ? color.withOpacity(0.8) : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: color,
-                child: const Icon(Icons.person, color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 12),
-              DiceRoller(
-                onRolled: (diceValue) {
-                  if (isCurrent) {
-                    handleDiceRoll(diceValue);
-                  }
-                },
-                autoRoll: false, // Manual rolling only
-                delay: const Duration(milliseconds: 0),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment:
+      (playerIndex == 1 || playerIndex == 2) ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          "Player ${playerIndex + 1}",
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+            color: Colors.yellow,
           ),
         ),
-      ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isCurrent && (playerIndex == 1 || playerIndex == 2))
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.yellow, width: 2),
+                ),
+                child: DiceRoller(
+                  onRolled: (dice) => handleDiceRoll(playerIndex, dice),
+                  autoRoll: false,
+                  delay: const Duration(seconds: 1),
+                ),
+              ),
+
+            // Player token
+            Container(
+              width: 45,
+              height: 45,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: playerColors[playerIndex],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.yellow, width: 2),
+              ),
+              child: const Icon(Icons.location_on, color: Colors.white, size: 40),
+            ),
+
+            if (isCurrent && (playerIndex == 0 || playerIndex == 3))
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.yellow, width: 2),
+                ),
+                child: DiceRoller(
+                  onRolled: (dice) => handleDiceRoll(playerIndex, dice),
+                  autoRoll: false,
+                  delay: const Duration(seconds: 1),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
     const double imageWidth = 360.0;
     const double imageHeight = 500.0;
     const double imageAspect = imageWidth / imageHeight;
-    const double boardPadding = 24.0;
+    const double boardPadding = 2.0;
 
     return WillPopScope(
-      onWillPop: () {
-        return Future.value(false);
-      },
+      onWillPop: () async => false,
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.teal.shade100, Colors.blue.shade300],
+              colors: [Colors.greenAccent.shade200, Colors.blueAccent.shade400],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
           ),
           child: Stack(
             children: [
-              Column(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        double containerWidth = constraints.maxWidth - 2 * boardPadding;
-                        double containerHeight = constraints.maxHeight;
-                        double containerAspect = containerWidth / containerHeight;
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  double containerWidth = constraints.maxWidth - 2 * boardPadding;
+                  double containerHeight = constraints.maxHeight;
+                  double containerAspect = containerWidth / containerHeight;
 
-                        double renderedWidth;
-                        double renderedHeight;
+                  double renderedWidth;
+                  double renderedHeight;
 
-                        if (containerAspect > imageAspect) {
-                          renderedHeight = containerHeight;
-                          renderedWidth = containerHeight * imageAspect;
-                        } else {
-                          renderedWidth = containerWidth;
-                          renderedHeight = containerWidth / imageAspect;
-                        }
+                  if (containerAspect > imageAspect) {
+                    renderedHeight = containerHeight;
+                    renderedWidth = containerHeight * imageAspect;
+                  } else {
+                    renderedWidth = containerWidth;
+                    renderedHeight = containerWidth / imageAspect;
+                  }
 
-                        double xOffset = (constraints.maxWidth - renderedWidth) / 2;
-                        double yOffset = (containerHeight - renderedHeight) / 2;
+                  double xOffset = (constraints.maxWidth - renderedWidth) / 2;
+                  double yOffset = (containerHeight - renderedHeight) / 2;
 
-                        double cellWidth = renderedWidth / 10;
-                        double cellHeight = renderedHeight / 10;
+                  double cellWidth = renderedWidth / 10;
+                  double cellHeight = renderedHeight / 10;
+                  double tokenSize = min(cellWidth, cellHeight) * 0.8;
 
-                        double tokenSize = min(cellWidth, cellHeight) * 0.8;
-
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: boardPadding),
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 12,
-                                spreadRadius: 4,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Stack(
-                            children: [
-                              SvgPicture.asset(
-                                'assets/images/boards/premium03.svg',
-                                width: containerWidth,
-                                height: containerHeight,
-                                fit: BoxFit.contain,
-                              ),
-                              ...List.generate(widget.selectedPlayers, (index) {
-                                Offset offset = getPositionOffset(playerPositions[index], cellWidth, cellHeight, boardPadding);
-                                return Positioned(
-                                  left: offset.dx - tokenSize / 2 - xOffset,
-                                  top: yOffset + offset.dy - tokenSize / 2,
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 300),
-                                    width: tokenSize,
-                                    height: tokenSize,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      image: DecorationImage(
-                                        image: AssetImage(playerTokenPaths[index]),
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ],
+                  return Stack(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/images/boards/premium03.svg',
+                        width: containerWidth,
+                        height: containerHeight,
+                        fit: BoxFit.contain,
+                      ),
+                      ...List.generate(widget.selectedPlayers, (index) {
+                        Offset offset =
+                        getPositionOffset(playerPositions[index], cellWidth, cellHeight, boardPadding);
+                        return Positioned(
+                          left: offset.dx - tokenSize / 2 - xOffset,
+                          top: yOffset + offset.dy - tokenSize / 2,
+                          child: Icon(
+                            Icons.location_on,
+                            color: playerColors[index],
+                            size: tokenSize,
                           ),
                         );
-                      },
-                    ),
-                  ),
-                ],
+                      }),
+                    ],
+                  );
+                },
               ),
 
-              if (widget.selectedPlayers >= 1)
-                Positioned(bottom: 100, left: 20, child: buildPlayerInfo(0)),
+              // Player info
+              Positioned(bottom: 80, left: 20, child: buildPlayerInfo(0)),
               if (widget.selectedPlayers >= 2)
-                Positioned(bottom: 100, right: 20, child: buildPlayerInfo(1)),
+                Positioned(bottom: 80, right: 20, child: buildPlayerInfo(1)),
               if (widget.selectedPlayers >= 3)
                 Positioned(top: 70, right: 20, child: buildPlayerInfo(2)),
               if (widget.selectedPlayers >= 4)
                 Positioned(top: 70, left: 20, child: buildPlayerInfo(3)),
 
+              // Exit button
               Positioned(
-                top: 10,
-                right: 10,
+                bottom: 10,
+                left: 10,
                 child: ExitButton(
                   onPressed: () {
                     showDialog(
@@ -347,8 +330,8 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                             ),
                             TextButton(
                               onPressed: () {
-                                Navigator.of(context).pop(); // Close dialog
-                                Navigator.of(context).pop(); // Exit game screen
+                                Navigator.of(context).pop();
+                                Navigator.of(context).pop();
                               },
                               child: const Text("Exit", style: TextStyle(color: Colors.red)),
                             ),

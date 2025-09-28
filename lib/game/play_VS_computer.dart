@@ -155,7 +155,6 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
   }
 
   Widget buildPlayerInfo(int playerIndex, String label, Color color) {
-    Color pinColor = playerIndex == 0 ? Colors.green[900]! : Colors.red;
     Color textColor = Colors.yellow[700]!;
 
     return Column(
@@ -171,7 +170,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
             fontFamily: 'Poppins',
           ),
         ),
-
+        const SizedBox(height: 6),
         Row(
           children: [
             if (currentPlayerIndex == playerIndex && winner == null && playerIndex == 1)
@@ -200,7 +199,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.yellow, width: 2),
               ),
-              child: Icon(Icons.location_on, color: pinColor, size: 40),
+              child: Icon(Icons.location_on, color: Colors.white, size: 40),
             ),
 
             // Player dice on right
