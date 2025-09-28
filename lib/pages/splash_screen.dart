@@ -32,7 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
 
     // Splash screen delay
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 3));
 
     // Read updated state
     final state = ref.read(signInProvider);

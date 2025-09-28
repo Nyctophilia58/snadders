@@ -20,6 +20,8 @@ class StatisticsPage extends StatefulWidget {
 class _StatisticsPageState extends State<StatisticsPage> {
   late String _selectedProfileImage;
   late TextEditingController _usernameController;
+  late FocusNode _usernameFocusNode;
+  bool _isEditing = false; // Only editable when true
   final SharedPrefsService _sharedPrefsService = SharedPrefsService();
 
   final List<String> _profileImages = List.generate(
@@ -31,7 +33,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
   void initState() {
     super.initState();
     _usernameController = TextEditingController(text: widget.username);
+    _usernameFocusNode = FocusNode();
     _loadProfileImage();
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _usernameFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProfileImage() async {
@@ -40,12 +50,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
       _selectedProfileImage =
       (savedImage.isNotEmpty) ? savedImage : _profileImages.first;
     });
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    super.dispose();
   }
 
   void _showProfileImageSelector() {
@@ -70,7 +74,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     setState(() {
                       _selectedProfileImage = _profileImages[index];
                     });
-                    await _sharedPrefsService.saveProfileImage(_selectedProfileImage);
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -103,7 +106,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   void _saveUsername(String value) async {
     if (value.isNotEmpty) {
       await _sharedPrefsService.saveUsername(value, isGuest: widget.isGuest);
-      setState(() {}); // refresh UI
+      setState(() {});
     }
   }
 
@@ -119,7 +122,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.greenAccent, Colors.lightBlueAccent]
+            colors: [Colors.greenAccent, Colors.lightBlueAccent],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -158,15 +161,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 ),
               ),
               const SizedBox(height: 12),
+
+              // Username row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  widget.isGuest
-                      ? SizedBox(
+                  SizedBox(
                     width: 150,
                     child: TextField(
                       controller: _usernameController,
+                      focusNode: _usernameFocusNode,
+                      readOnly: !_isEditing,
                       textAlign: TextAlign.center,
+                      maxLength: 20, // Restrict to 20 characters
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -174,29 +181,30 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       ),
                       decoration: const InputDecoration(
                         border: InputBorder.none,
+                        counterText: '', // hides the default counter below TextField
                       ),
-                      onChanged: (value) {
-                        _saveUsername(value); // save on typing
-                      },
                       onSubmitted: (value) {
-                        _saveUsername(value); // save on submit
+                        _saveUsername(value);
+                        setState(() {
+                          _isEditing = false;
+                        });
                       },
-                    ),
-                  )
-                      : Text(
-                    widget.username,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
                     ),
                   ),
                   const SizedBox(width: 8),
                   if (widget.isGuest)
-                    const Icon(
-                      Icons.edit,
-                      color: Colors.deepPurple,
-                      size: 18,
+                    GestureDetector(
+                      child: const Icon(
+                        Icons.edit,
+                        color: Colors.deepPurple,
+                        size: 18,
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _isEditing = true;
+                        });
+                        _usernameFocusNode.requestFocus(); // show keyboard
+                      },
                     ),
                 ],
               ),
@@ -265,7 +273,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 children: [
                   ExitButton(onPressed: () => Navigator.pop(context)),
                   ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () async {
+                      await _sharedPrefsService.saveProfileImage(_selectedProfileImage);
+                      _saveUsername(_usernameController.text);
+                      Navigator.pop(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
                       padding: const EdgeInsets.symmetric(
