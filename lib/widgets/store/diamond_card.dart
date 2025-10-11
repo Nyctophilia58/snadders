@@ -18,7 +18,7 @@ class DiamondCard extends StatelessWidget {
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: Size(80, 30)),
-            child: Text(price),
+            child: Text(price, style: TextStyle(fontSize: 10)),
           ),
         ],
       ),

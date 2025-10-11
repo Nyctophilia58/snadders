@@ -10,18 +10,18 @@ class CoinsTab extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.all(8.0),
       children: [
-        BundleOfferCard(), // Same as diamonds for consistency
+        BundleOfferCard(),
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
           children: [
-            CoinCard(amount: '10,000', price: 'BDT 104.99'),
-            CoinCard(amount: '30,000', price: 'BDT 324.79'),
-            CoinCard(amount: '100,000', price: 'BDT 910.89'),
-            CoinCard(amount: '250,000', price: 'BDT 1,952.79'),
-            CoinCard(amount: '1,000,000', price: 'BDT 6,511.09'),
-            CoinCard(amount: '2,000,000', price: 'BDT 7,813.49'),
+            CoinCard(amount: '10,000', price: 'BDT 99.99'),
+            CoinCard(amount: '30,000', price: 'BDT 299.99'),
+            CoinCard(amount: '100,000', price: 'BDT 999.99'),
+            CoinCard(amount: '250,000', price: 'BDT 2499.99'),
+            CoinCard(amount: '1,000,000', price: 'BDT 9999.99'),
+            CoinCard(amount: '2,000,000', price: 'BDT 19999.99'),
           ],
         ),
       ],

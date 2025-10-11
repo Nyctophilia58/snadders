@@ -14,7 +14,7 @@ class _BoardsTabState extends State<BoardsTab> {
   final SharedPrefsService _prefsService = SharedPrefsService();
   List<bool> unlockedBoards = [];
 
-  final String price = 'BDT 259.69';
+  final String price = 'BDT 49.99';
 
   @override
   void initState() {
@@ -44,7 +44,7 @@ class _BoardsTabState extends State<BoardsTab> {
     }
 
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: 3,
       padding: const EdgeInsets.all(8.0),
       childAspectRatio: 0.75,
       children: List.generate(boardImages.length, (index) {
