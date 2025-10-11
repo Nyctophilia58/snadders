@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../constants/board_constants.dart';
+import '../services/shared_prefs_service.dart';
 
 class BoardSelector extends StatefulWidget {
   const BoardSelector({super.key});
@@ -10,23 +12,41 @@ class BoardSelector extends StatefulWidget {
 
 class _BoardSelectorState extends State<BoardSelector> {
   int currentBoardIndex = 0;
+  List<bool> unlockedBoards = [];
+  final SharedPrefsService _prefsService = SharedPrefsService();
 
-  final List<String> boardImages = [
-    'assets/images/boards/1.svg',
-    'assets/images/boards/2.svg',
-    'assets/images/boards/3.svg',
-    'assets/images/boards/4.svg',
-    'assets/images/boards/5.svg',
-    'assets/images/boards/6.svg',
-    'assets/images/boards/7.svg',
-    'assets/images/boards/8.svg',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadUnlockedBoards();
+  }
+
+  Future<void> _loadUnlockedBoards() async {
+    List<bool> boards = List.generate(
+      boardImages.length,
+          (index) => index < defaultUnlockedBoards,
+    );
+
+    for (int i = 0; i < boardImages.length; i++) {
+      boards[i] = await _prefsService.loadBoardUnlocked(i) || boards[i];
+    }
+
+    setState(() {
+      unlockedBoards = boards;
+    });
+  }
 
   void nextBoard() => setState(() => currentBoardIndex = (currentBoardIndex + 1) % boardImages.length);
   void prevBoard() => setState(() => currentBoardIndex = (currentBoardIndex - 1 + boardImages.length) % boardImages.length);
 
   @override
   Widget build(BuildContext context) {
+    if (unlockedBoards.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    bool isUnlocked = unlockedBoards[currentBoardIndex];
+
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -41,11 +61,28 @@ class _BoardSelectorState extends State<BoardSelector> {
           children: [
             Expanded(
               child: Center(
-                child: SvgPicture.asset(
-                  boardImages[currentBoardIndex],
-                  fit: BoxFit.contain,
-                  width: 360,
-                  height: 500,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      boardImages[currentBoardIndex],
+                      fit: BoxFit.contain,
+                      width: 360,
+                      height: 500,
+                    ),
+                    if (!isUnlocked)
+                      FittedBox(
+                        fit: BoxFit.contain,
+                        child: Container(
+                          width: 360,
+                          height: 500,
+                          color: Colors.black.withOpacity(0.3),
+                          child: const Center(
+                            child: Icon(Icons.lock, color: Colors.white, size: 80),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -59,12 +96,12 @@ class _BoardSelectorState extends State<BoardSelector> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: isUnlocked ? Colors.green : Colors.grey,
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Select', style: TextStyle(fontSize: 18, color: Colors.white)),
-              onPressed: () => Navigator.pop(context, currentBoardIndex),
+              onPressed: isUnlocked ? () => Navigator.pop(context, currentBoardIndex) : null,
+              child: Text('Select', style: const TextStyle(fontSize: 18, color: Colors.white)),
             ),
           ],
         ),

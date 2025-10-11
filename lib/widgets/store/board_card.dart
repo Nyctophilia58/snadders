@@ -2,19 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 class BoardCard extends StatelessWidget {
-  final String name;
-  final String progress;
   final String price;
   final String imagePath;
   final bool isLocked;
 
   const BoardCard({
     super.key,
-    required this.name,
-    required this.progress,
     required this.price,
     required this.imagePath,
-    this.isLocked = false,
+    required this.isLocked,
   });
 
   @override
@@ -22,43 +18,33 @@ class BoardCard extends StatelessWidget {
     return Stack(
       children: [
         Card(
-          color: Colors.red[800],
+          color: Colors.grey[800],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
-                  child: SvgPicture.asset(
+                child: SvgPicture.asset(
                     imagePath,
                     fit: BoxFit.cover,
                     width: double.infinity,
                   ),
                 ),
-              ),
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: isLocked ? EdgeInsets.all(8.0) : EdgeInsets.all(0.0),
                 child: Column(
                   children: [
-                    Text(name, style: TextStyle(color: Colors.white)),
-                    SizedBox(height: 4),
-                    Icon(
-                      Icons.play_circle,
-                      color: isLocked ? Colors.grey : Colors.green,
-                    ),
-                    SizedBox(height: 4),
-                    Text(progress, style: TextStyle(color: Colors.white)),
-                    SizedBox(height: 4),
-                    Text('OR', style: TextStyle(color: Colors.white)),
-                    SizedBox(height: 4),
-                    ElevatedButton(
-                      onPressed: isLocked ? null : () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        isLocked ? Colors.grey : Colors.green,
+                    if (isLocked)
+                      ElevatedButton(
+                        onPressed: !isLocked ? null : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Purchased for $price')),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
+                        child: Text(isLocked ? price : ''),
                       ),
-                      child: Text(price),
-                    ),
                   ],
                 ),
               ),
@@ -69,7 +55,7 @@ class BoardCard extends StatelessWidget {
         if (isLocked)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withOpacity(0.3),
               child: Center(
                 child: Icon(Icons.lock, color: Colors.white, size: 40),
               ),

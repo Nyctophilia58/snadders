@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/shared_prefs_service.dart';
 import '../widgets/store/boards_tab.dart';
 import '../widgets/store/coins_tab.dart';
 import '../widgets/store/diamonds_tab.dart';
@@ -13,12 +14,31 @@ class StorePage extends StatefulWidget {
 
 class _StorePageState extends State<StorePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final SharedPrefsService _sharedPrefsService = SharedPrefsService();
+  int coins = 0;
+  int diamonds = 0;
 
   @override
   void initState() {
     super.initState();
+    _loadCoins();
+    _loadDiamonds();
     _tabController = TabController(length: 4, vsync: this);
   }
+  Future<void> _loadCoins() async {
+    final loadedCoins = await _sharedPrefsService.loadCoins();
+    setState(() {
+      coins = loadedCoins;
+    });
+  }
+
+  Future<void> _loadDiamonds() async {
+    final loadedDiamonds = await _sharedPrefsService.loadDiamonds();
+    setState(() {
+      diamonds = loadedDiamonds;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +67,19 @@ class _StorePageState extends State<StorePage> with SingleTickerProviderStateMix
                     Row(
                       children: [
                         Icon(Icons.monetization_on, color: Colors.yellow),
-                        Text(' 1,100', style: TextStyle(color: Colors.white)),
+                        Text(
+                          ' $coins',
+                          style: TextStyle(color: Colors.white)
+                        ),
                       ],
                     ),
                     Row(
                       children: [
                         Icon(Icons.diamond, color: Colors.blue),
-                        Text(' 125', style: TextStyle(color: Colors.white)),
+                        Text(
+                          ' $diamonds',
+                          style: TextStyle(color: Colors.white)
+                        ),
                       ],
                     ),
                   ],

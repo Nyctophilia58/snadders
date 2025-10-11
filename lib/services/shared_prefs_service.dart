@@ -7,6 +7,7 @@ class SharedPrefsService {
   static const String _usernameKey = 'username';
   static const String _isGuestKey = 'isGuest';
   static const String _profileImageKey = 'profileImage';
+  static const String _boardKeyPrefix = 'board_';
 
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
@@ -153,5 +154,34 @@ class SharedPrefsService {
     } catch (e) {
       print('Error clearing data: $e');
     }
+  }
+
+  // Save if a board is unlocked
+  Future<void> saveBoardUnlocked(int boardIndex, bool unlocked) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_boardKeyPrefix$boardIndex', unlocked);
+    } catch (e) {
+      print('Error saving board $boardIndex: $e');
+    }
+  }
+
+  // Load if a board is unlocked (default false if not set)
+  Future<bool> loadBoardUnlocked(int boardIndex) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('$_boardKeyPrefix$boardIndex') ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Load all boards ownership
+  Future<List<bool>> loadAllBoards(int totalBoards) async {
+    List<bool> boards = [];
+    for (int i = 0; i < totalBoards; i++) {
+      boards.add(await loadBoardUnlocked(i));
+    }
+    return boards;
   }
 }
