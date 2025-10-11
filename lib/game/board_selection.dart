@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/board_constants.dart';
+import '../pages/store_page.dart';
 import '../services/shared_prefs_service.dart';
 
 class BoardSelector extends StatefulWidget {
@@ -96,12 +97,26 @@ class _BoardSelectorState extends State<BoardSelector> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: isUnlocked ? Colors.green : Colors.grey,
+                backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: isUnlocked ? () => Navigator.pop(context, currentBoardIndex) : null,
-              child: Text('Select', style: const TextStyle(fontSize: 18, color: Colors.white)),
+              onPressed: () {
+                if (isUnlocked) {
+                  Navigator.pop(context, currentBoardIndex);
+                } else {
+                  Navigator.pop(context);
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StorePage(initialTabIndex: 2),
+                    ),
+                  );
+                }
+              },
+              child: Text(isUnlocked ? 'Select' : 'Buy',
+                  style: const TextStyle(fontSize: 18, color: Colors.white)),
             ),
           ],
         ),

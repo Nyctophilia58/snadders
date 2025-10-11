@@ -6,7 +6,8 @@ import '../widgets/store/diamonds_tab.dart';
 import '../widgets/store/offers_tab.dart';
 
 class StorePage extends StatefulWidget {
-  const StorePage({super.key});
+  final int initialTabIndex;
+  const StorePage({super.key, this.initialTabIndex = 0});
 
   @override
   State<StorePage> createState() => _StorePageState();
@@ -24,7 +25,9 @@ class _StorePageState extends State<StorePage> with SingleTickerProviderStateMix
     _loadCoins();
     _loadDiamonds();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.index = widget.initialTabIndex;
   }
+
   Future<void> _loadCoins() async {
     final loadedCoins = await _sharedPrefsService.loadCoins();
     setState(() {

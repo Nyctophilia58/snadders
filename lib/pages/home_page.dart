@@ -242,7 +242,9 @@ class _HomePageState extends State<HomePage>
                                   onPressed: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const StorePage()),
+                                      MaterialPageRoute(builder: (context) => const StorePage(
+                                        initialTabIndex: 0,
+                                      )),
                                     );
                                   },
                                 ),
