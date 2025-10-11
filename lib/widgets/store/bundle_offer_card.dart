@@ -16,7 +16,7 @@ class BundleOfferCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.monetization_on, color: Colors.yellow),
-                Text('100,000 Coins + Remove Ads + 100 Diamonds'),
+                Text('100,000 Coins + 100 Diamonds'),
               ],
             ),
             ElevatedButton(

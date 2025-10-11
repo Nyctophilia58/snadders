@@ -114,7 +114,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             const Text(
               'Welcome to Snadders...',
               style: TextStyle(

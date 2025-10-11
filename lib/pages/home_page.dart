@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../game/board_selection.dart';
 import '../pages/store_page.dart';
+import '../services/remove_ads_service.dart';
 import '../services/shared_prefs_service.dart';
 import '../widgets/profile/profile_avatar.dart';
 import '../game/pass_N_play.dart';
@@ -354,8 +355,12 @@ class _HomePageState extends State<HomePage>
                                   }),
                                   const SizedBox(width: 10),
                                   _buildSmallButton(
-                                    'Remove ADs', Icons.video_library, () {},
-                                    showFire: true),
+                                    'Remove ADs', Icons.video_library,
+                                    () {
+
+                                    },
+                                    showFire: true
+                                  ),
                                 ],
                               ),
                               SizedBox(height: bottomPadding + 60),

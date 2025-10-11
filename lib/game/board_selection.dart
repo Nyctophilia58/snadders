@@ -15,6 +15,11 @@ class _BoardSelectorState extends State<BoardSelector> {
     'assets/images/boards/1.svg',
     'assets/images/boards/2.svg',
     'assets/images/boards/3.svg',
+    'assets/images/boards/4.svg',
+    'assets/images/boards/5.svg',
+    'assets/images/boards/6.svg',
+    'assets/images/boards/7.svg',
+    'assets/images/boards/8.svg',
   ];
 
   void nextBoard() => setState(() => currentBoardIndex = (currentBoardIndex + 1) % boardImages.length);
@@ -59,7 +64,7 @@ class _BoardSelectorState extends State<BoardSelector> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Select', style: TextStyle(fontSize: 18, color: Colors.white)),
-              onPressed: () => Navigator.pop(context, currentBoardIndex), // RETURN THE INDEX
+              onPressed: () => Navigator.pop(context, currentBoardIndex),
             ),
           ],
         ),
