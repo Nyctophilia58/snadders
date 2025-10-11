@@ -44,3 +44,4 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 lib/constants/ad_unit_ids.dart
+test/constants/ad_unit_ids.dart
