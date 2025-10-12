@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
-import '../providers/sign_in_state_provider.dart';
+import 'package:snadders/pages/page_controllers/splash_screen_controller.dart';
 import 'home_page.dart';
 import 'sign_in_page.dart';
 
@@ -13,35 +13,26 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  late final SplashController controller;
 
   @override
   void initState() {
     super.initState();
+    controller = SplashController(ref);
     _initApp();
   }
 
   void _initApp() async {
-    final signInNotifier = ref.read(signInProvider.notifier);
+    await controller.initializeApp();
 
-    // Check Google sign-in
-    await signInNotifier.checkSignInGoogle();
-
-    // Check guest sign-in if not signed in with Google
-    if (!ref.read(signInProvider).signedIn) {
-      await signInNotifier.checkSignInGuest();
-    }
-
-    // Splash screen delay
-    await Future.delayed(const Duration(seconds: 3));
-
-    // Read updated state
-    final state = ref.read(signInProvider);
-
-    if (state.signedIn) {
+    if (controller.isSignedIn()) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => HomePage(username: state.username, isGuest: state.isGuest),
+          builder: (_) => HomePage(
+            username: controller.getUsername(),
+            isGuest: controller.getIsGuest(),
+          ),
         ),
       );
     } else {
@@ -95,13 +86,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                         height: 170,
                       ),
                     ),
-
                     Positioned(
                       bottom: 10,
                       right: 25,
                       child: Transform(
                         alignment: Alignment.center,
-                        transform: Matrix4.identity()..scale(-1.0, 1.0), // horizontal flip
+                        transform: Matrix4.identity()..scale(-1.0, 1.0),
                         child: Lottie.asset(
                           'assets/animations/dice.json',
                           repeat: false,
