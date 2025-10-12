@@ -1,9 +1,12 @@
-import '../../constants/board_constants.dart';
-import '../../services/shared_prefs_service.dart';
+import '../constants/board_constants.dart';
+import '../services/shared_prefs_service.dart';
 
 class BoardSelectorController {
   int currentBoardIndex = 0;
-  final SharedPrefsService _prefsService = SharedPrefsService();
+  final SharedPrefsService _prefsService;
+
+  BoardSelectorController({SharedPrefsService? prefsService})
+      : _prefsService = prefsService ?? SharedPrefsService();
 
   Future<List<bool>> loadUnlockedBoards() async {
     List<bool> boards = List.generate(
