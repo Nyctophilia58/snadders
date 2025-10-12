@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/sign_in_state_provider.dart';
 
-class SplashController {
+class SplashScreenController {
   final WidgetRef ref;
-  SplashController(this.ref);
+  SplashScreenController(this.ref);
 
   Future<void> initializeApp() async {
     final signInNotifier = ref.read(signInProvider.notifier);

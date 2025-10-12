@@ -13,12 +13,12 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  late final SplashController controller;
+  late final SplashScreenController controller;
 
   @override
   void initState() {
     super.initState();
-    controller = SplashController(ref);
+    controller = SplashScreenController(ref);
     _initApp();
   }
 

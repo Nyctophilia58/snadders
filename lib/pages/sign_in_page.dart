@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/sign_in_page_controller.dart';
-import '../services/shared_prefs_service.dart';
 import '../widgets/exit_button.dart';
 import '../pages/home_page.dart';
 

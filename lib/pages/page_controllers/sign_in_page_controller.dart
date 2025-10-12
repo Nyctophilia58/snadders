@@ -15,6 +15,7 @@ class SignInPageController {
   }
 
   Future<void> playAsGuest(String username) async {
+    _prefsService.clearAll();
     if (username.isNotEmpty) {
       await _prefsService.saveUsername(username, isGuest: true);
     }
