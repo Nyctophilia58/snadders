@@ -1,4 +1,4 @@
-class SettingsController {
+class SettingsPageController {
   bool soundEnabled = true;
   String selectedLanguage = 'English';
   String selectedBoard = 'Classic';

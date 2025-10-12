@@ -1,7 +1,7 @@
 import 'package:snadders/services/google_play_services.dart';
 import 'package:snadders/services/shared_prefs_service.dart';
 
-class SignInController {
+class SignInPageController {
   final SharedPrefsService _prefsService = SharedPrefsService();
 
   Future<String?> signInWithGoogle() async {

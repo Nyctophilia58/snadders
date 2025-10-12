@@ -3,7 +3,7 @@ import '../../services/ad_services/ad_interstitial_service.dart';
 import '../../services/ad_services/ad_reward_service.dart';
 import '../../services/shared_prefs_service.dart';
 
-class HomeController {
+class HomePageController {
   final SharedPrefsService _prefsService = SharedPrefsService();
 
   int coins = 0;

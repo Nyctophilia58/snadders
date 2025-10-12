@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:snadders/pages/page_controllers/settings_controller.dart';
+import 'package:snadders/pages/page_controllers/settings_page_controller.dart';
 import '../widgets/exit_button.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -10,7 +10,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final SettingsController controller = SettingsController();
+  final SettingsPageController controller = SettingsPageController();
 
   @override
   Widget build(BuildContext context) {

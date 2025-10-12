@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:snadders/services/google_play_services.dart';
-import 'package:snadders/widgets/exit_button.dart';
+import 'package:snadders/pages/page_controllers/sign_in_page_controller.dart';
 import '../services/shared_prefs_service.dart';
-import 'package:snadders/pages/home_page.dart';
+import '../widgets/exit_button.dart';
+import '../pages/home_page.dart';
 
 class SignInPage extends StatelessWidget {
   SignInPage({super.key});
 
-  final SharedPrefsService _sharedPrefsService = SharedPrefsService();
+  final SignInPageController controller = SignInPageController();
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,6 @@ class SignInPage extends StatelessWidget {
                 ),
               ),
             ),
-
             SafeArea(
               child: Center(
                 child: Padding(
@@ -36,6 +35,7 @@ class SignInPage extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // App Icon
                       Container(
                         width: 180,
                         height: 180,
@@ -44,16 +44,15 @@ class SignInPage extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: ClipOval(
-                          child: Image(
-                            image: AssetImage('assets/icons/app_icon.png'),
+                          child: Image.asset(
+                            'assets/icons/app_icon.png',
                             fit: BoxFit.cover,
-                            width: 180,
-                            height: 180,
                           ),
                         ),
                       ),
                       const SizedBox(height: 25),
 
+                      // Title
                       Text(
                         "Start Your Adventure",
                         style: theme.textTheme.headlineSmall?.copyWith(
@@ -62,9 +61,9 @@ class SignInPage extends StatelessWidget {
                         ),
                         textAlign: TextAlign.center,
                       ),
-
                       const SizedBox(height: 32),
 
+                      // Buttons Card
                       Card(
                         color: Colors.white,
                         elevation: 4,
@@ -75,21 +74,18 @@ class SignInPage extends StatelessWidget {
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             children: [
-                              // Sign in with Google Button
+                              // Google Sign-In Button
                               FilledButton.icon(
-                                onPressed: () {
-                                  GooglePlayServices.signIn();
-                                  // After successful sign-in, get the username
-                                  GooglePlayServices.getUsername().then((username) {
-                                    _sharedPrefsService.saveUsername(username, isGuest: false);
-                                    // Navigate to HomePage
+                                onPressed: () async {
+                                  final username = await controller.signInWithGoogle();
+                                  if (username != null) {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => HomePage(username: username, isGuest: false),
+                                        builder: (_) => HomePage(username: username, isGuest: false),
                                       ),
                                     );
-                                  });
+                                  }
                                 },
                                 icon: const Icon(Icons.login, color: Colors.white),
                                 label: const Text("Sign in with Google", style: TextStyle(color: Colors.white)),
@@ -107,11 +103,14 @@ class SignInPage extends StatelessWidget {
                                   shadowColor: Colors.deepPurpleAccent.withOpacity(0.3),
                                 ),
                               ),
-
                               const SizedBox(height: 10),
-
-                              Text("OR", style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.w600)),
-
+                              Text(
+                                "OR",
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               const SizedBox(height: 10),
 
                               // Play as Guest Button
@@ -124,30 +123,23 @@ class SignInPage extends StatelessWidget {
                                       return AlertDialog(
                                         title: const Text("Enter your username"),
                                         content: TextField(
-                                          onChanged: (value) {
-                                            playerName = value;
-                                          },
-                                          decoration: const InputDecoration(
-                                            hintText: "Username",
-                                          ),
+                                          onChanged: (value) => playerName = value,
+                                          decoration: const InputDecoration(hintText: "Username"),
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
+                                            onPressed: () => Navigator.pop(context),
                                             child: const Text("Cancel"),
                                           ),
                                           ElevatedButton(
                                             onPressed: () async {
                                               if (playerName.isNotEmpty) {
-                                                _sharedPrefsService.saveUsername(playerName, isGuest: true);
+                                                await controller.playAsGuest(playerName);
                                                 Navigator.pop(context);
-                                                // Navigate to HomePage as guest
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                      builder: (context) => HomePage(username: playerName, isGuest: true)
+                                                    builder: (_) => HomePage(username: playerName, isGuest: true),
                                                   ),
                                                 );
                                               }
@@ -184,6 +176,8 @@ class SignInPage extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Exit Button
             Positioned(
               bottom: 20,
               left: 20,
@@ -191,30 +185,26 @@ class SignInPage extends StatelessWidget {
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (context) {
+                    builder: (_) {
                       return AlertDialog(
                         title: const Text("Exit App"),
                         content: const Text("Are you sure you want to exit?"),
                         actions: [
                           TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
+                            onPressed: () => Navigator.pop(context),
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              exit(0);
-                            },
+                            onPressed: () => exit(0),
                             child: const Text("Exit"),
                           ),
                         ],
                       );
-                    }
+                    },
                   );
                 },
               ),
-            )
+            ),
           ],
         ),
       ),

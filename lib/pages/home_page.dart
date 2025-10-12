@@ -23,12 +23,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late HomeController controller;
+  late HomePageController controller;
 
   @override
   void initState() {
     super.initState();
-    controller = HomeController();
+    controller = HomePageController();
     WidgetsBinding.instance.addObserver(this);
     controller.init(initialUsername: widget.username).then((_) => setState(() {}));
   }
