@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:snadders/game/controllers/game_controller.dart';
 import '../widgets/exit_button.dart';
 import '../services/ad_services/ad_banner_service.dart';
-import '../services/ad_services/ad_interstitial_service.dart';
 import 'game_utils.dart';
 
 class PassNPlay extends StatefulWidget {
@@ -17,19 +17,20 @@ class PassNPlay extends StatefulWidget {
 }
 
 class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMixin {
-  late List<int> playerPositions;
-  int currentPlayerIndex = 0;
-  String? winner;
+  late GameController controller;
   late AnimationController _winnerAnimationController;
   late Animation<double> _winnerAnimation;
-  int get _boardNumber => widget.boardIndex + 1;
 
   final List<Color> playerColors = [Colors.green, Colors.red, Colors.yellow, Colors.blue];
 
   @override
   void initState() {
     super.initState();
-    playerPositions = List<int>.filled(widget.selectedPlayers, 1);
+    controller = GameController(
+      totalPlayers: widget.selectedPlayers,
+      boardNumber: widget.boardIndex + 1,
+      playerNames: List.generate(widget.selectedPlayers, (i) => "Player ${i + 1}"),
+    );
     _winnerAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -37,6 +38,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
     _winnerAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _winnerAnimationController, curve: Curves.easeInOut),
     );
+
     AdBannerService.loadBannerAd();
   }
 
@@ -47,32 +49,25 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
   }
 
   void _handleDiceRoll(int playerIndex, int dice) {
-    if (winner != null || currentPlayerIndex != playerIndex) return;
+    if (controller.winner != null || controller.currentPlayerIndex != playerIndex) return;
 
-    GameUtils.handleDiceRoll(
-      playerIndex: playerIndex,
-      playerPositions: playerPositions,
-      dice: dice,
-      totalPlayers: widget.selectedPlayers,
-      boardIndex: _boardNumber,
-      updateCurrentPlayer: (newIndex) => setState(() => currentPlayerIndex = newIndex),
-      onWinner: (winnerName) {
-        winner = "Player ${playerIndex + 1}";
+    setState(() {
+      controller.rollDice(playerIndex, dice);
+
+      if (controller.winner != null) {
         _winnerAnimationController.forward();
         GameUtils.showWinnerDialog(
           context: context,
-          winnerName: winner!,
+          winnerName: controller.winner!,
           onPlayAgain: _resetGame,
         );
-      },
-    );
+      }
+    });
   }
 
   void _resetGame() {
     setState(() {
-      playerPositions = List<int>.filled(widget.selectedPlayers, 1);
-      currentPlayerIndex = 0;
-      winner = null;
+      controller.reset();
       _winnerAnimationController.reset();
     });
   }
@@ -124,13 +119,13 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                   return Stack(
                     children: [
                       SvgPicture.asset(
-                        'assets/images/boards/$_boardNumber.svg',
+                        'assets/images/boards/${widget.boardIndex + 1}.svg',
                         width: containerWidth,
                         height: containerHeight,
                         fit: BoxFit.contain,
                       ),
                       ...List.generate(widget.selectedPlayers, (index) {
-                        Offset offset = GameUtils.getPositionOffset(playerPositions[index], cellWidth, cellHeight, boardPadding);
+                        Offset offset = GameUtils.getPositionOffset(controller.playerPositions[index], cellWidth, cellHeight, boardPadding);
                         return Positioned(
                           left: offset.dx - tokenSize / 2 - xOffset,
                           top: yOffset + offset.dy - tokenSize / 2,
@@ -151,7 +146,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                 playerIndex: 0,
                 label: "Player 1",
                 color: playerColors[0],
-                currentPlayerIndex: currentPlayerIndex,
+                currentPlayerIndex: controller.currentPlayerIndex,
                 autoRollDice: false,
                 onRolled: _handleDiceRoll,
               )),
@@ -160,7 +155,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                   playerIndex: 1,
                   label: "Player 2",
                   color: playerColors[1],
-                  currentPlayerIndex: currentPlayerIndex,
+                  currentPlayerIndex: controller.currentPlayerIndex,
                   autoRollDice: false,
                   onRolled: _handleDiceRoll,
                 )),
@@ -169,7 +164,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                   playerIndex: 2,
                   label: "Player 3",
                   color: playerColors[2],
-                  currentPlayerIndex: currentPlayerIndex,
+                  currentPlayerIndex: controller.currentPlayerIndex,
                   autoRollDice: false,
                   onRolled: _handleDiceRoll,
                 )),
@@ -178,7 +173,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                   playerIndex: 3,
                   label: "Player 4",
                   color: playerColors[3],
-                  currentPlayerIndex: currentPlayerIndex,
+                  currentPlayerIndex: controller.currentPlayerIndex,
                   autoRollDice: false,
                   onRolled: _handleDiceRoll,
                 )),

@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:snadders/game/controllers/game_controller.dart';
 import '../widgets/exit_button.dart';
 import '../services/ad_services/ad_banner_service.dart';
-import '../services/ad_services/ad_interstitial_service.dart';
 import 'game_utils.dart';
 
 class PlayVsComputer extends StatefulWidget {
@@ -17,17 +17,20 @@ class PlayVsComputer extends StatefulWidget {
 }
 
 class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProviderStateMixin {
-  late List<int> playerPositions;
-  int currentPlayerIndex = 0;
-  String? winner;
+  late GameController controller;
   late AnimationController _winnerAnimationController;
   late Animation<double> _winnerAnimation;
-  int get _boardNumber => widget.boardIndex + 1;
 
   @override
   void initState() {
     super.initState();
-    playerPositions = [1, 1];
+    controller = GameController(
+      totalPlayers: 2,
+      boardNumber: widget.boardIndex + 1,
+      playerNames: [widget.username, "Computer"],
+    );
+
+
     _winnerAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -35,6 +38,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
     _winnerAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _winnerAnimationController, curve: Curves.easeInOut),
     );
+
     AdBannerService.loadBannerAd();
   }
 
@@ -45,32 +49,25 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
   }
 
   void _handleDiceRoll(int playerIndex, int dice) {
-    if (winner != null || currentPlayerIndex != playerIndex) return;
+    if (controller.winner != null || controller.currentPlayerIndex != playerIndex) return;
 
-    GameUtils.handleDiceRoll(
-      playerIndex: playerIndex,
-      playerPositions: playerPositions,
-      dice: dice,
-      totalPlayers: 2,
-      boardIndex: _boardNumber,
-      updateCurrentPlayer: (newIndex) => setState(() => currentPlayerIndex = newIndex),
-      onWinner: (winnerName) {
-        winner = playerIndex == 0 ? widget.username : "Computer";
+    setState(() {
+      controller.rollDice(playerIndex, dice);
+
+      if (controller.winner != null) {
         _winnerAnimationController.forward();
         GameUtils.showWinnerDialog(
           context: context,
-          winnerName: winner!,
+          winnerName: controller.winner!,
           onPlayAgain: _resetGame,
         );
-      },
-    );
+      }
+    });
   }
 
   void _resetGame() {
     setState(() {
-      playerPositions = [1, 1];
-      currentPlayerIndex = 0;
-      winner = null;
+      controller.reset();
       _winnerAnimationController.reset();
     });
   }
@@ -122,13 +119,18 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
                   return Stack(
                     children: [
                       SvgPicture.asset(
-                        'assets/images/boards/$_boardNumber.svg',
+                        'assets/images/boards/${widget.boardIndex + 1}.svg',
                         width: containerWidth,
                         height: containerHeight,
                         fit: BoxFit.contain,
                       ),
                       ...List.generate(2, (index) {
-                        Offset offset = GameUtils.getPositionOffset(playerPositions[index], cellWidth, cellHeight, boardPadding);
+                        Offset offset = GameUtils.getPositionOffset(
+                          controller.playerPositions[index],
+                          cellWidth,
+                          cellHeight,
+                          boardPadding,
+                        );
                         Color tokenColor = index == 0 ? Colors.green : Colors.red;
                         return Positioned(
                           left: offset.dx - tokenSize / 2 - xOffset,
@@ -157,7 +159,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
                       playerIndex: 0,
                       label: "You",
                       color: Colors.green,
-                      currentPlayerIndex: currentPlayerIndex,
+                      currentPlayerIndex: controller.currentPlayerIndex,
                       autoRollDice: false,
                       onRolled: _handleDiceRoll,
                     ),
@@ -165,7 +167,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
                       playerIndex: 1,
                       label: "Computer",
                       color: Colors.red,
-                      currentPlayerIndex: currentPlayerIndex,
+                      currentPlayerIndex: controller.currentPlayerIndex,
                       autoRollDice: true,
                       onRolled: _handleDiceRoll,
                       isComputer: true,

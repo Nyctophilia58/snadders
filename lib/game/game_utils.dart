@@ -1,6 +1,4 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/dice_roller.dart';
 import '../services/ad_services/ad_banner_service.dart';
 import '../services/ad_services/ad_interstitial_service.dart';
@@ -55,7 +53,6 @@ class GameUtils {
     return Offset(dx, dy);
   }
 
-  /// Build player info widget
   /// Build player info widget with correct dice placement
   static Widget buildPlayerInfo({
     required int playerIndex,
