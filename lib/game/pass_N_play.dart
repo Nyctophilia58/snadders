@@ -54,6 +54,7 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
       playerPositions: playerPositions,
       dice: dice,
       totalPlayers: widget.selectedPlayers,
+      boardIndex: _boardNumber,
       updateCurrentPlayer: (newIndex) => setState(() => currentPlayerIndex = newIndex),
       onWinner: (winnerName) {
         winner = "Player ${playerIndex + 1}";

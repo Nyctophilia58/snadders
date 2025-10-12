@@ -16,6 +16,7 @@ class GameUtils {
     required List<int> playerPositions,
     required int dice,
     required int totalPlayers,
+    required int boardIndex,
     required Function(int newCurrentPlayerIndex) updateCurrentPlayer,
     required Function(String winnerName) onWinner,
   }) {
@@ -27,11 +28,15 @@ class GameUtils {
 
     playerPositions[playerIndex] = newPosition;
 
-    if (ladders_1.containsKey(playerPositions[playerIndex])) {
-      playerPositions[playerIndex] = ladders_1[playerPositions[playerIndex]]!;
-    } else if (snakes_1.containsKey(playerPositions[playerIndex])) {
-      playerPositions[playerIndex] = snakes_1[playerPositions[playerIndex]]!;
+    Map<int, int> ladders = laddersList[boardIndex - 1];
+    Map<int, int> snakes = snakesList[boardIndex - 1];
+
+    if (ladders.containsKey(playerPositions[playerIndex])) {
+      playerPositions[playerIndex] = ladders[playerPositions[playerIndex]]!;
+    } else if (snakes.containsKey(playerPositions[playerIndex])) {
+      playerPositions[playerIndex] = snakes[playerPositions[playerIndex]]!;
     }
+
 
     if (playerPositions[playerIndex] == 100) {
       onWinner("Player ${playerIndex + 1}");

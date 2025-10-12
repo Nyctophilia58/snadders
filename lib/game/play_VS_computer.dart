@@ -52,6 +52,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
       playerPositions: playerPositions,
       dice: dice,
       totalPlayers: 2,
+      boardIndex: _boardNumber,
       updateCurrentPlayer: (newIndex) => setState(() => currentPlayerIndex = newIndex),
       onWinner: (winnerName) {
         winner = playerIndex == 0 ? widget.username : "Computer";
