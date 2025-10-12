@@ -1,3 +1,17 @@
+// snakesList
+const List<Map<int, int>> snakesList = [
+  snakes_1,
+  snakes_2,
+  snakes_3,
+  snakes_4,
+  snakes_5,
+  snakes_6,
+  snakes_7,
+  snakes_8,
+];
+
+
+
 // Snakes -> board01
 const Map<int, int> snakes_1 = {
   13: 4,

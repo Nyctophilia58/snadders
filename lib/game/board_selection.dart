@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/board_constants.dart';
 import '../pages/store_page.dart';
-import 'board_selector_controller.dart';
+import 'controllers/board_selector_controller.dart';
 
 class BoardSelector extends StatefulWidget {
   const BoardSelector({super.key});

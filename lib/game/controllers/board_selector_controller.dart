@@ -1,5 +1,5 @@
-import '../constants/board_constants.dart';
-import '../services/shared_prefs_service.dart';
+import '../../constants/board_constants.dart';
+import '../../services/shared_prefs_service.dart';
 
 class BoardSelectorController {
   int currentBoardIndex = 0;

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:snadders/constants/board_constants.dart';
-import 'package:snadders/game/board_selector_controller.dart';
+import 'package:snadders/game/controllers/board_selector_controller.dart';
 import 'package:snadders/services/shared_prefs_service.dart';
 
 // Mock class for SharedPrefsService

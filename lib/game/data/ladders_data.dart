@@ -1,3 +1,15 @@
+// laddersList
+const List<Map<int, int>> laddersList = [
+  ladders_1,
+  ladders_2,
+  ladders_3,
+  ladders_4,
+  ladders_5,
+  ladders_6,
+  ladders_7,
+  ladders_8,
+];
+
 // ladders -> board01
 const Map<int, int> ladders_1 = {
   6: 27,

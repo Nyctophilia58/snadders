@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:snadders/game/board_selection.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:snadders/game/board_selector_controller.dart';
+import 'package:snadders/game/controllers/board_selector_controller.dart';
 
 class MockBoardSelectorController extends Mock implements BoardSelectorController {}
 
