@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/board_constants.dart';
 import '../pages/store_page.dart';
-import '../services/shared_prefs_service.dart';
+import 'board_selector_controller.dart';
 
 class BoardSelector extends StatefulWidget {
   const BoardSelector({super.key});
@@ -12,9 +12,8 @@ class BoardSelector extends StatefulWidget {
 }
 
 class _BoardSelectorState extends State<BoardSelector> {
-  int currentBoardIndex = 0;
+  final BoardSelectorController _controller = BoardSelectorController();
   List<bool> unlockedBoards = [];
-  final SharedPrefsService _prefsService = SharedPrefsService();
 
   @override
   void initState() {
@@ -23,22 +22,9 @@ class _BoardSelectorState extends State<BoardSelector> {
   }
 
   Future<void> _loadUnlockedBoards() async {
-    List<bool> boards = List.generate(
-      boardImages.length,
-          (index) => index < defaultUnlockedBoards,
-    );
-
-    for (int i = 0; i < boardImages.length; i++) {
-      boards[i] = await _prefsService.loadBoardUnlocked(i) || boards[i];
-    }
-
-    setState(() {
-      unlockedBoards = boards;
-    });
+    final boards = await _controller.loadUnlockedBoards();
+    setState(() => unlockedBoards = boards);
   }
-
-  void nextBoard() => setState(() => currentBoardIndex = (currentBoardIndex + 1) % boardImages.length);
-  void prevBoard() => setState(() => currentBoardIndex = (currentBoardIndex - 1 + boardImages.length) % boardImages.length);
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +32,7 @@ class _BoardSelectorState extends State<BoardSelector> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    bool isUnlocked = unlockedBoards[currentBoardIndex];
+    final isUnlocked = unlockedBoards[_controller.currentBoardIndex];
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -60,66 +46,86 @@ class _BoardSelectorState extends State<BoardSelector> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              child: Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      boardImages[currentBoardIndex],
-                      fit: BoxFit.contain,
-                      width: 360,
-                      height: 500,
-                    ),
-                    if (!isUnlocked)
-                      FittedBox(
-                        fit: BoxFit.contain,
-                        child: Container(
-                          width: 360,
-                          height: 500,
-                          color: Colors.black.withOpacity(0.3),
-                          child: const Center(
-                            child: Icon(Icons.lock, color: Colors.white, size: 80),
-                          ),
-                        ),
-                      ),
-                  ],
+            Expanded(child: _buildBoardPreview(isUnlocked)),
+            _buildNavigation(),
+            _buildActionButton(context, isUnlocked),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBoardPreview(bool isUnlocked) {
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SvgPicture.asset(
+            boardImages[_controller.currentBoardIndex],
+            fit: BoxFit.contain,
+            width: 360,
+            height: 500,
+          ),
+          if (!isUnlocked)
+            FittedBox(
+              fit: BoxFit.contain,
+              child: Container(
+                width: 360,
+                height: 500,
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(
+                  child: Icon(Icons.lock, color: Colors.white, size: 80),
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(icon: const Icon(Icons.arrow_left, size: 40), onPressed: prevBoard),
-                Text('Board ${currentBoardIndex + 1}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                IconButton(icon: const Icon(Icons.arrow_right, size: 40), onPressed: nextBoard),
-              ],
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
-                if (isUnlocked) {
-                  Navigator.pop(context, currentBoardIndex);
-                } else {
-                  Navigator.pop(context);
+        ],
+      ),
+    );
+  }
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => StorePage(initialTabIndex: 2),
-                    ),
-                  );
-                }
-              },
-              child: Text(isUnlocked ? 'Select' : 'Buy',
-                  style: const TextStyle(fontSize: 18, color: Colors.white)),
-            ),
-          ],
+  Widget _buildNavigation() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_left, size: 40),
+          onPressed: () => setState(() => _controller.prevBoard()),
         ),
+        Text(
+          'Board ${_controller.currentBoardIndex + 1}',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_right, size: 40),
+          onPressed: () => setState(() => _controller.nextBoard()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, bool isUnlocked) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.green,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      onPressed: () {
+        if (isUnlocked) {
+          Navigator.pop(context, _controller.currentBoardIndex);
+        } else {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StorePage(initialTabIndex: 2),
+            ),
+          );
+        }
+      },
+      child: Text(
+        isUnlocked ? 'Select' : 'Buy',
+        style: const TextStyle(fontSize: 18, color: Colors.white),
       ),
     );
   }
