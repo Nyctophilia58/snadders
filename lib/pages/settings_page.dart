@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snadders/pages/page_controllers/settings_controller.dart';
 import '../widgets/exit_button.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -9,11 +10,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool soundEnabled = true;
-  String selectedLanguage = 'English';
-  String selectedBoard = 'Classic';
-  final List<String> boardThemes = ['Classic', 'Ocean', 'Forest', 'Candy'];
-  final List<String> languages = ['English', 'Bangla'];
+  final SettingsController controller = SettingsController();
 
   @override
   Widget build(BuildContext context) {
@@ -51,47 +48,47 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 20),
 
               // Audio toggle
-              _buildToggle("Audio", soundEnabled, (val) {
+              _buildToggle("Audio", controller.soundEnabled, (val) {
                 setState(() {
-                  soundEnabled = val;
+                  controller.toggleSound(val);
                 });
               }),
               const SizedBox(height: 20),
 
               // Language selection
-              _buildDropdown("Language", selectedLanguage, languages, (val) {
+              _buildDropdown("Language", controller.selectedLanguage, controller.languages, (val) {
                 setState(() {
-                  selectedLanguage = val;
+                  controller.selectLanguage(val);
                 });
               }),
               const SizedBox(height: 20),
 
               // Board theme selection
-              _buildDropdown("Board Theme", selectedBoard, boardThemes, (val) {
+              _buildDropdown("Board Theme", controller.selectedBoard, controller.boardThemes, (val) {
                 setState(() {
-                  selectedBoard = val;
+                  controller.selectBoard(val);
                 });
               }),
               const Divider(color: Colors.white54, height: 30),
 
               // Other options
               _buildOption("Store", () {
-                // Navigate to store view
+                controller.openStore();
               }),
               _buildOption("Notifications", () {
-                // Open notifications settings
+                controller.openNotifications();
               }),
               _buildOption("Troubleshoot", () {
-                // Open troubleshooting guide
+                controller.troubleshoot();
               }),
               _buildOption("Request Account Deletion", () {
-                // Handle account deletion request
+                controller.requestAccountDeletion();
               }),
               _buildOption("Rate Us", () {
-                // Open rate dialog or app store
+                controller.rateUs();
               }),
               _buildOption("Share", () {
-                // Share app link
+                controller.shareApp();
               }),
               _buildOption("Version: 1.0.0", null, showArrow: false),
               const SizedBox(height: 20),

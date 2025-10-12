@@ -147,7 +147,7 @@ class SignInPage extends StatelessWidget {
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                    builder: (context) => HomePage(username: playerName, isGuest: true)
+                                                      builder: (context) => HomePage(username: playerName, isGuest: true)
                                                   ),
                                                 );
                                               }

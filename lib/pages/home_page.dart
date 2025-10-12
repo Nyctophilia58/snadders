@@ -1,16 +1,12 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:snadders/pages/page_controllers/home_page_controller.dart';
 import '../game/board_selection.dart';
 import '../pages/store_page.dart';
-import '../services/remove_ads_service.dart';
-import '../services/shared_prefs_service.dart';
 import '../widgets/profile/profile_avatar.dart';
 import '../game/pass_N_play.dart';
 import '../game/play_VS_computer.dart';
 import '../game/player_selection.dart';
-import '../services/ad_services/ad_interstitial_service.dart';
-import '../services/ad_services/ad_reward_service.dart';
 import '../pages/settings_page.dart';
 import '../pages/statistics_page.dart';
 import '../widgets/wheel/wheel.dart';
@@ -27,104 +23,30 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  int coins = 0;
-  int diamonds = 0;
-  final SharedPrefsService _sharedPrefsService = SharedPrefsService();
-  Timer? cooldownTimer;
-  int remainingCooldown = 0;
-  bool canSpin = true;
-  String profileImagePath = SharedPrefsService.defaultProfileImage;
-
-  late String username;
+  late HomeController controller;
 
   @override
   void initState() {
     super.initState();
-    username = widget.username;
+    controller = HomeController();
     WidgetsBinding.instance.addObserver(this);
-    _loadCoins();
-    _loadDiamonds();
-    _checkSpin();
-    _loadProfileImage();
-    _loadUsername();
-    AdRewardService.loadRewardedAd();
-    AdInterstitialService.loadInterstitialAd();
+    controller.init(initialUsername: widget.username).then((_) => setState(() {}));
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    cooldownTimer?.cancel();
+    controller.dispose();
     super.dispose();
   }
 
-  Future<void> _loadCoins() async {
-    final loadedCoins = await _sharedPrefsService.loadCoins();
-    setState(() {
-      coins = loadedCoins;
-    });
-  }
-
-  Future<void> _loadDiamonds() async {
-    final loadedDiamonds = await _sharedPrefsService.loadDiamonds();
-    setState(() {
-      diamonds = loadedDiamonds;
-    });
-  }
-
-  Future<void> _checkSpin() async {
-    canSpin = await _sharedPrefsService.canSpin();
-    remainingCooldown = await _sharedPrefsService.getRemainingCooldown();
-    if (!canSpin) {
-      _startCooldownTimer();
-    }
-    setState(() {});
-  }
-
-  Future<void> _loadProfileImage() async {
-    final image = await _sharedPrefsService.loadProfileImage();
-    setState(() {
-      profileImagePath = image;
-    });
-  }
-
-  Future<void> _loadUsername() async {
-    final savedUsername = await _sharedPrefsService.loadUsername();
-    if (savedUsername != null && savedUsername.isNotEmpty) {
-      setState(() {
-        username = savedUsername;
-      });
-    }
-  }
-
   Future<String> _getProfileImage() async {
-    return await _sharedPrefsService.loadProfileImage();
+    return controller.profileImagePath;
   }
 
-  void _startCooldownTimer() {
-    cooldownTimer?.cancel();
-    cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      remainingCooldown = await _sharedPrefsService.getRemainingCooldown();
-      if (remainingCooldown == 0) {
-        canSpin = true;
-        timer.cancel();
-      }
-      setState(() {});
-    });
-  }
-
-  void _onSpinCompleted() {
-    _loadCoins();
-    _loadDiamonds();
-    _sharedPrefsService
-        .saveLastSpinTimestamp(DateTime.now().millisecondsSinceEpoch);
-    _checkSpin();
-  }
-
-  String _formatCooldown(int millis) {
-    final seconds = millis ~/ 1000;
-    final minutes = seconds ~/ 60;
-    return minutes.toString().padLeft(2, '0');
+  void _onSpinCompleted() async {
+    await controller.onSpinCompleted();
+    setState(() {});
   }
 
   @override
@@ -177,33 +99,34 @@ class _HomePageState extends State<HomePage>
                                   future: _getProfileImage(),
                                   builder: (context, snapshot) {
                                     return ProfileAvatar(
-                                      imagePath: profileImagePath,
+                                      imagePath: controller.profileImagePath,
                                       size: 40,
                                       onTap: () {
                                         showDialog(
                                           context: context,
                                           builder: (context) => Dialog(
-                                            backgroundColor:
-                                            Colors.transparent,
-                                            insetPadding:
-                                            const EdgeInsets.all(16),
+                                            backgroundColor: Colors.transparent,
+                                            insetPadding: const EdgeInsets.all(16),
                                             child: StatisticsPage(
-                                              username: username,
+                                              username: controller.username,
                                               isGuest: widget.isGuest,
                                             ),
                                           ),
-                                        ).then((_) {
-                                          _loadProfileImage();
-                                          _loadUsername(); // reload username
+                                        ).then((_) async {
+                                          await controller.loadProfileImage();
+                                          await controller.loadUsername();
+                                          setState(() {});
                                         });
-                                      });
-                                  }),
+                                      },
+                                    );
+                                  },
+                                ),
                                 const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      username,
+                                      controller.username,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -216,7 +139,7 @@ class _HomePageState extends State<HomePage>
                                             color: Colors.yellow, size: 18),
                                         const SizedBox(width: 4),
                                         Text(
-                                          coins.toString(),
+                                          controller.coins.toString(),
                                           style: const TextStyle(
                                               color: Colors.white),
                                         ),
@@ -232,7 +155,7 @@ class _HomePageState extends State<HomePage>
                                     color: Colors.lightBlueAccent),
                                 const SizedBox(width: 4),
                                 Text(
-                                  diamonds.toString(),
+                                  controller.diamonds.toString(),
                                   style: const TextStyle(color: Colors.white),
                                 ),
                                 const SizedBox(width: 12),
@@ -242,9 +165,10 @@ class _HomePageState extends State<HomePage>
                                   onPressed: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const StorePage(
-                                        initialTabIndex: 0,
-                                      )),
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                        const StorePage(initialTabIndex: 0),
+                                      ),
                                     );
                                   },
                                 ),
@@ -289,7 +213,7 @@ class _HomePageState extends State<HomePage>
                                   _buildButton(
                                     'VS COMPUTER',
                                     Icons.smart_toy,
-                                    () async {
+                                        () async {
                                       final selectedBoardIndex = await showDialog<int>(
                                         context: context,
                                         builder: (context) => const BoardSelector(),
@@ -300,7 +224,7 @@ class _HomePageState extends State<HomePage>
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => PlayVsComputer(
-                                              username: username,
+                                              username: controller.username,
                                               boardIndex: selectedBoardIndex,
                                             ),
                                           ),
@@ -308,11 +232,10 @@ class _HomePageState extends State<HomePage>
                                       }
                                     },
                                   ),
-
                                   _buildButton(
                                     'PASS N PLAY',
                                     Icons.group,
-                                    () async {
+                                        () async {
                                       final selectedBoardIndex = await showDialog<int>(
                                         context: context,
                                         builder: (context) => const BoardSelector(),
@@ -326,7 +249,7 @@ class _HomePageState extends State<HomePage>
                                             MaterialPageRoute(
                                               builder: (context) => PassNPlay(
                                                 selectedPlayers: selectedPlayers,
-                                                boardIndex: selectedBoardIndex, // pass board number
+                                                boardIndex: selectedBoardIndex,
                                               ),
                                             ),
                                           );
@@ -334,15 +257,13 @@ class _HomePageState extends State<HomePage>
                                       }
                                     },
                                   ),
-
                                 ],
                               ),
                               const SizedBox(height: 30),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  _buildSmallButton(
-                                      'Scores', Icons.emoji_events, () {}),
+                                  _buildSmallButton('Scores', Icons.emoji_events, () {}),
                                   const SizedBox(width: 10),
                                   _buildSmallButton(
                                       'Settings', Icons.settings, () {
@@ -358,10 +279,8 @@ class _HomePageState extends State<HomePage>
                                   const SizedBox(width: 10),
                                   _buildSmallButton(
                                     'Remove ADs', Icons.video_library,
-                                    () {
-
-                                    },
-                                    showFire: true
+                                        () {},
+                                    showFire: true,
                                   ),
                                 ],
                               ),
@@ -404,12 +323,9 @@ class _HomePageState extends State<HomePage>
                       ],
                     ),
                     onTap: () async {
-                      bool adWatched = await AdRewardService.showRewardedAd();
+                      bool adWatched = await controller.claimFreeCoins();
                       if (adWatched) {
-                        setState(() {
-                          coins += 10;
-                          _sharedPrefsService.saveCoins(coins);
-                        });
+                        setState(() {});
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("You earned 10 coins!")),
                         );
@@ -428,7 +344,7 @@ class _HomePageState extends State<HomePage>
                   right: 20,
                   child: GestureDetector(
                     onTap: () {
-                      if (canSpin) {
+                      if (controller.canSpin) {
                         showDialog(
                           context: context,
                           builder: (context) => Dialog(
@@ -441,7 +357,7 @@ class _HomePageState extends State<HomePage>
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              "Next spin available in ${_formatCooldown(remainingCooldown)} minutes",
+                              "Next spin available in ${controller.formatCooldown(controller.remainingCooldown)} minutes",
                             ),
                           ),
                         );
