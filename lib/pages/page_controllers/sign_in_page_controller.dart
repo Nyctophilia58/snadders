@@ -5,6 +5,7 @@ class SignInPageController {
   final SharedPrefsService _prefsService = SharedPrefsService();
 
   Future<String?> signInWithGoogle() async {
+    _prefsService.clearAll();
     await GooglePlayServices.signIn();
     final username = await GooglePlayServices.getUsername();
     if (username != null && username.isNotEmpty) {

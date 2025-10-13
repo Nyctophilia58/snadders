@@ -4,7 +4,10 @@ import '../../services/ad_services/ad_reward_service.dart';
 import '../../services/shared_prefs_service.dart';
 
 class HomePageController {
-  final SharedPrefsService _prefsService = SharedPrefsService();
+  final SharedPrefsService _prefsService;
+
+  HomePageController({SharedPrefsService? prefsService})
+      : _prefsService = prefsService ?? SharedPrefsService();
 
   int coins = 0;
   int diamonds = 0;
@@ -12,7 +15,7 @@ class HomePageController {
   bool canSpin = true;
   String profileImagePath = SharedPrefsService.defaultProfileImage;
   String username = '';
-  Timer? _cooldownTimer;
+  Timer? cooldownTimer;
 
   Future<void> init({required String initialUsername}) async {
     username = initialUsername;
@@ -61,8 +64,8 @@ class HomePageController {
   }
 
   void _startCooldownTimer() {
-    _cooldownTimer?.cancel();
-    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+    cooldownTimer?.cancel();
+    cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       remainingCooldown = await _prefsService.getRemainingCooldown();
       if (remainingCooldown == 0) {
         canSpin = true;
@@ -87,6 +90,6 @@ class HomePageController {
   }
 
   void dispose() {
-    _cooldownTimer?.cancel();
+    cooldownTimer?.cancel();
   }
 }
