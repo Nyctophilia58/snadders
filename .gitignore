@@ -43,5 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/app/key.jks
+/android/key.properties
 lib/constants/ad_unit_ids.dart
 test/constants/ad_unit_ids_test.dart
