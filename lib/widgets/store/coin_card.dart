@@ -16,7 +16,9 @@ class CoinCard extends StatelessWidget {
           Icon(Icons.monetization_on, size: 40, color: Colors.yellow),
           Text(amount, style: TextStyle(color: Colors.white)),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+
+            },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: Size(80, 30)),
             child: Text(price, style: TextStyle(fontSize: 10)),
           ),

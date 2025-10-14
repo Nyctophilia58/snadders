@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import 'package:snadders/pages/page_controllers/splash_screen_controller.dart';
+import 'package:snadders/services/iap_services.dart';
 import 'home_page.dart';
 import 'sign_in_page.dart';
 
@@ -13,6 +14,7 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  final IAPService _iapService = IAPService();
   late final SplashScreenController controller;
 
   @override
@@ -23,6 +25,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   void _initApp() async {
+    await _iapService.initialize();
+
     await controller.initializeApp();
 
     if (controller.isSignedIn()) {
@@ -32,6 +36,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           builder: (_) => HomePage(
             username: controller.getUsername(),
             isGuest: controller.getIsGuest(),
+            iapService: _iapService,
           ),
         ),
       );
@@ -41,6 +46,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         MaterialPageRoute(builder: (_) => SignInPage()),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _iapService.dispose();
   }
 
   @override

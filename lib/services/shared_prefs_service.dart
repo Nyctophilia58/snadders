@@ -151,6 +151,7 @@ class SharedPrefsService {
       await prefs.remove(_lastSpinTimestampKey);
       await prefs.remove(_usernameKey);
       await prefs.remove(_isGuestKey);
+      await prefs.remove(_profileImageKey);
     } catch (e) {
       print('Error clearing data: $e');
     }
