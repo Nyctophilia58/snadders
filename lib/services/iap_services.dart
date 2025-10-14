@@ -30,12 +30,6 @@ class IAPService {
       return;
     }
 
-    final productDetailsResponse = await _iap.queryProductDetails({_removeAllAdsId, _removeRewardedAdsId});
-    if (productDetailsResponse.productDetails.isEmpty) {
-      debugPrint('No products found');
-      return;
-    }
-
     // Listen for purchase updates
     _subscription = _iap.purchaseStream.listen(
       _handlePurchaseUpdates,

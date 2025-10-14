@@ -49,12 +49,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    _iapService.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
