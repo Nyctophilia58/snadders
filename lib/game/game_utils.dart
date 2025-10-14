@@ -149,7 +149,7 @@ class GameUtils {
                 ),
               ),
               const SizedBox(height: 20),
-              if (!allAdsRemoved || AdBannerService.getBannerWidget() != null)
+              if (!allAdsRemoved && AdBannerService.getBannerWidget() != null)
                 AdBannerService.getBannerWidget()!,
               const SizedBox(height: 20),
               Row(

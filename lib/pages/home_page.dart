@@ -358,20 +358,38 @@ class _HomePageState extends State<HomePage>
                         ),
                       ],
                     ),
-                    onTap: () async {
-                      bool adWatched = await controller.claimFreeCoins();
-                      if (adWatched) {
-                        setState(() {});
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("You earned 10 coins!")),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text("Ad not ready. Try again later.")),
-                        );
+
+                      onTap: () async {
+                        if (widget.iapService.rewardedAdsRemovedNotifier.value) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Ads Removed'),
+                              content: const Text('You have removed rewarded ads. You cannot claim free coins.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Ads available, try to claim coins
+                        bool adWatched = await controller.claimFreeCoins();
+                        if (adWatched) {
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("You earned 10 coins!")),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Ad not ready. Try again later.")),
+                          );
+                        }
                       }
-                    },
                   ),
                 ),
                 // spin wheel bottom right
