@@ -3,19 +3,27 @@ import 'package:lottie/lottie.dart';
 import 'package:snadders/pages/page_controllers/home_page_controller.dart';
 import '../game/board_selection.dart';
 import '../pages/store_page.dart';
+import '../services/iap_services.dart';
 import '../widgets/profile/profile_avatar.dart';
 import '../game/pass_N_play.dart';
 import '../game/play_VS_computer.dart';
 import '../game/player_selection.dart';
 import '../pages/settings_page.dart';
 import '../pages/statistics_page.dart';
+import '../widgets/ad_removal_selection.dart';
 import '../widgets/wheel/wheel.dart';
 
 class HomePage extends StatefulWidget {
+  final IAPService iapService;
   final String username;
   final bool isGuest;
 
-  const HomePage({super.key, required this.username, required this.isGuest});
+  const HomePage({
+    super.key,
+    required this.username,
+    required this.isGuest,
+    required this.iapService,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -226,6 +234,7 @@ class _HomePageState extends State<HomePage>
                                             builder: (context) => PlayVsComputer(
                                               username: controller.username,
                                               boardIndex: selectedBoardIndex,
+                                              allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
                                             ),
                                           ),
                                         );
@@ -250,6 +259,7 @@ class _HomePageState extends State<HomePage>
                                               builder: (context) => PassNPlay(
                                                 selectedPlayers: selectedPlayers,
                                                 boardIndex: selectedBoardIndex,
+                                                allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
                                               ),
                                             ),
                                           );
@@ -277,11 +287,37 @@ class _HomePageState extends State<HomePage>
                                     );
                                   }),
                                   const SizedBox(width: 10),
-                                  _buildSmallButton(
-                                    'Remove ADs', Icons.video_library,
-                                        () {},
-                                    showFire: true,
+                                  ValueListenableBuilder<bool>(
+                                    valueListenable: widget.iapService.allAdsRemovedNotifier,
+                                    builder: (context, allRemoved, _) {
+                                      return ValueListenableBuilder<bool>(
+                                        valueListenable: widget.iapService.rewardedAdsRemovedNotifier,
+                                        builder: (context, rewardedRemoved, _) {
+                                          if (allRemoved && rewardedRemoved) return const SizedBox.shrink();
+
+                                          return _buildSmallButton(
+                                            'Remove ADs',
+                                            Icons.video_library,
+                                              () async {
+                                                final selectedAds = await showAdRemovalSelectionDialog(
+                                                  context,
+                                                  allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
+                                                  rewardedAdsRemoved: widget.iapService.rewardedAdsRemovedNotifier.value,
+                                                );
+                                                debugPrint('Selected to remove: $selectedAds');
+                                              if (selectedAds == 'rewarded') {
+                                                await widget.iapService.purchaseProduct('remove_rewarded_ads');
+                                              } else if (selectedAds == 'all') {
+                                                await widget.iapService.purchaseProduct('remove_all_ads');
+                                              }
+                                            },
+                                            showFire: true,
+                                          );
+                                        },
+                                      );
+                                    },
                                   ),
+
                                 ],
                               ),
                               SizedBox(height: bottomPadding + 60),

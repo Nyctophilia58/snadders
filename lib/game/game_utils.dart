@@ -123,6 +123,7 @@ class GameUtils {
     required BuildContext context,
     required String winnerName,
     required VoidCallback onPlayAgain,
+    required bool allAdsRemoved,
   }) {
     showModalBottomSheet(
       context: context,
@@ -148,7 +149,7 @@ class GameUtils {
                 ),
               ),
               const SizedBox(height: 20),
-              if (AdBannerService.getBannerWidget() != null)
+              if (!allAdsRemoved || AdBannerService.getBannerWidget() != null)
                 AdBannerService.getBannerWidget()!,
               const SizedBox(height: 20),
               Row(
@@ -176,7 +177,9 @@ class GameUtils {
                     onPressed: () {
                       Navigator.pop(context);
                       Navigator.pop(context);
-                      AdInterstitialService.showInterstitialAd();
+                      if (!allAdsRemoved) {
+                        AdInterstitialService.showInterstitialAd();
+                      }
                     },
                   ),
                 ],

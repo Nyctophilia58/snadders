@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import '../widgets/exit_button.dart';
-import '../services/ad_services/ad_banner_service.dart';
 import 'game_utils.dart';
 
 class PlayVsComputer extends StatefulWidget {
   final String username;
   final int boardIndex;
+  final bool allAdsRemoved;
 
-  const PlayVsComputer({super.key, required this.username, required this.boardIndex});
+  const PlayVsComputer({super.key, required this.username, required this.boardIndex, required this.allAdsRemoved});
 
   @override
   State<PlayVsComputer> createState() => _PlayVsComputerState();
@@ -22,6 +22,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
   late Animation<double> _winnerAnimation;
 
   @override
+  @override
   void initState() {
     super.initState();
     controller = GameController(
@@ -30,7 +31,6 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
       playerNames: [widget.username, "Computer"],
     );
 
-
     _winnerAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -38,9 +38,8 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
     _winnerAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _winnerAnimationController, curve: Curves.easeInOut),
     );
-
-    AdBannerService.loadBannerAd();
   }
+
 
   @override
   void dispose() {
@@ -60,6 +59,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
           context: context,
           winnerName: controller.winner!,
           onPlayAgain: _resetGame,
+          allAdsRemoved: widget.allAdsRemoved,
         );
       }
     });
