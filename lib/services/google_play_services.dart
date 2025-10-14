@@ -21,13 +21,13 @@ class GooglePlayServices {
     }
   }
 
-  static Future<String> getUsername() async {
+  static Future<String?> getUsername() async {
     try {
       final player = await GamesServices.getPlayerName();
-      return player ?? "Player";
+      return player;
     } catch (e) {
       debugPrint("Error retrieving username: $e");
-      return "Player";
+      return null;
     }
   }
 

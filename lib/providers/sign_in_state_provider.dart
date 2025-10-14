@@ -27,10 +27,10 @@ class SignInNotifier extends StateNotifier<SignInState> {
 
   Future<void> checkSignInGoogle() async {
     final signedIn = await GooglePlayServices.isSignedIn();
-    String username = "";
+    String? username = "";
     if (signedIn) {
       username = await GooglePlayServices.getUsername();
-      await _sharedPrefsService.saveUsername(username, isGuest: false);
+      await _sharedPrefsService.saveUsername(username!, isGuest: false);
     }
     state = state.copyWith(signedIn: signedIn, username: username, isGuest: false);
   }
