@@ -5,7 +5,6 @@ class SignInPageController {
   final SharedPrefsService _prefsService = SharedPrefsService();
 
   Future<String?> signInWithGoogle() async {
-    _prefsService.clearAll();
     await GooglePlayServices.signIn();
     final username = await GooglePlayServices.getUsername();
     if (username != null && username.isNotEmpty) {
@@ -16,7 +15,6 @@ class SignInPageController {
   }
 
   Future<void> playAsGuest(String username) async {
-    _prefsService.clearAll();
     if (username.isNotEmpty) {
       await _prefsService.saveUsername(username, isGuest: true);
     }

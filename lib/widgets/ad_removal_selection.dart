@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/iap_services.dart';
+
 Future<String?> showAdRemovalSelectionDialog(
     BuildContext context, {
       required bool allAdsRemoved,
@@ -49,7 +51,7 @@ Future<String?> showAdRemovalSelectionDialog(
                 onTap: allAdsRemoved
                     ? null
                     : () {
-                  Navigator.of(context).pop('remove_all_ads');
+                  Navigator.of(context).pop(IAPService.removeAllAdsId);
                 },
               ),
             ),
@@ -81,7 +83,7 @@ Future<String?> showAdRemovalSelectionDialog(
                 onTap: rewardedAdsRemoved
                     ? null
                     : () {
-                  Navigator.of(context).pop('remove_rewarded_ads');
+                  Navigator.of(context).pop(IAPService.removeRewardedAdsId);
                 },
               ),
             ),

@@ -7,6 +7,9 @@ class IAPService {
   static const String _removeAllAdsId = 'remove_all_ads';
   static const String _removeRewardedAdsId = 'remove_rewarded_ads';
 
+  static String get removeAllAdsId => _removeAllAdsId;
+  static String get removeRewardedAdsId => _removeRewardedAdsId;
+
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
 
@@ -60,10 +63,10 @@ class IAPService {
     for (final purchase in detailsList) {
       if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
-        if (purchase.productID == _removeAllAdsId) {
+        if (purchase.productID == removeAllAdsId) {
           await prefs.setBool('isAllAdsRemoved', true);
           allAdsRemovedNotifier.value = true;
-        } else if (purchase.productID == _removeRewardedAdsId) {
+        } else if (purchase.productID == removeRewardedAdsId) {
           await prefs.setBool('isRewardedAdsRemoved', true);
           rewardedAdsRemovedNotifier.value = true;
         }

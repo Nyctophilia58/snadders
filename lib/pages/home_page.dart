@@ -299,18 +299,16 @@ class _HomePageState extends State<HomePage>
                                             'Remove ADs',
                                             Icons.video_library,
                                               () async {
-                                                final selectedAds = await showAdRemovalSelectionDialog(
+                                                final selectedProductId = await showAdRemovalSelectionDialog(
                                                   context,
                                                   allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
                                                   rewardedAdsRemoved: widget.iapService.rewardedAdsRemovedNotifier.value,
                                                 );
-                                                debugPrint('Selected to remove: $selectedAds');
-                                              if (selectedAds == 'rewarded') {
-                                                await widget.iapService.purchaseProduct('remove_rewarded_ads');
-                                              } else if (selectedAds == 'all') {
-                                                await widget.iapService.purchaseProduct('remove_all_ads');
-                                              }
-                                            },
+
+                                                if (selectedProductId != null) {
+                                                  await widget.iapService.purchaseProduct(selectedProductId);
+                                                }
+                                              },
                                             showFire: true,
                                           );
                                         },
