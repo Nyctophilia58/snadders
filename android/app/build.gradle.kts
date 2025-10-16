@@ -67,4 +67,5 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.android.support:multidex:1.0.3")
+    implementation("com.google.android.play:integrity:1.5.0")
 }
