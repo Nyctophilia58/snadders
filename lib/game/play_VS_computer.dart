@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
+import 'package:snadders/services/ad_services/ad_banner_service.dart';
 import '../widgets/exit_button.dart';
 import 'game_utils.dart';
 
@@ -38,6 +39,8 @@ class _PlayVsComputerState extends State<PlayVsComputer> with SingleTickerProvid
     _winnerAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _winnerAnimationController, curve: Curves.easeInOut),
     );
+
+    AdBannerService.loadBannerAd();
   }
 
 
