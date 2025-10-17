@@ -23,6 +23,9 @@ class IAPService {
   static const String _diamonds3200Id = 'diamonds_3200';
   static const String _diamonds6400Id = 'diamonds_6400';
 
+  // Bundle offer ID
+  static const String _bundleOffer = 'bundle_offer_100k_coins_100_diamonds';
+
   // Non-consumable product IDs
   static const String _removeAllAdsId = 'remove_all_ads';
   static const String _removeRewardedAdsId = 'remove_rewarded_ads';
@@ -42,6 +45,9 @@ class IAPService {
   static String get diamonds1600Id => _diamonds1600Id;
   static String get diamonds3200Id => _diamonds3200Id;
   static String get diamonds6400Id => _diamonds6400Id;
+
+  // Getter for Bundle offer ID
+  static String get bundleOffer => _bundleOffer;
 
   // Getters for Non-consumable product IDs
   static String get removeAllAdsId => _removeAllAdsId;
@@ -171,6 +177,21 @@ class IAPService {
           await _prefsService.saveDiamonds(diamonds);
           diamondNotifier.value = diamonds;
         }
+
+        // Bundle Offer
+        if (purchase.productID == bundleOffer) {
+          int coins = await _prefsService.loadCoins();
+          int diamonds = await _prefsService.loadDiamonds();
+
+          coins += 100000;
+          diamonds += 100;
+
+          await _prefsService.saveCoins(coins);
+          await _prefsService.saveDiamonds(diamonds);
+
+          coinsNotifier.value = coins;
+          diamondNotifier.value = diamonds;
+        }
       }
 
       if (purchase.pendingCompletePurchase) {
@@ -184,6 +205,7 @@ class IAPService {
   void dispose() {
     _subscription?.cancel();
     coinsNotifier.dispose();
+    diamondNotifier.dispose();
     allAdsRemovedNotifier.dispose();
     rewardedAdsRemovedNotifier.dispose();
   }

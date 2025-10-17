@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/iap_services.dart';
 
 class BundleOfferCard extends StatelessWidget {
   final String title;
@@ -31,7 +32,6 @@ class BundleOfferCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // 👇 Hardcoded description with text + icons
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
@@ -53,13 +53,9 @@ class BundleOfferCard extends StatelessWidget {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onBuy ??
-                      () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Purchase logic not implemented'),
-                      ),
-                    );
-                  },
+                () {
+                  IAPService.instance.purchaseConsumable(IAPService.bundleOffer);
+                },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding:
