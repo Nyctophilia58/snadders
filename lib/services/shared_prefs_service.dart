@@ -157,6 +157,34 @@ class SharedPrefsService {
     }
   }
 
+  Future<bool> loadAllAdsRemoved() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('isAllAdsRemoved') ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> loadRewardedAdsRemoved() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('isRewardedAdsRemoved') ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> setAllAdsRemoved(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isAllAdsRemoved', value);
+  }
+
+  Future<void> setRewardedAdsRemoved(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isRewardedAdsRemoved', value);
+  }
+
   // Save if a board is unlocked
   Future<void> saveBoardUnlocked(int boardIndex, bool unlocked) async {
     try {
