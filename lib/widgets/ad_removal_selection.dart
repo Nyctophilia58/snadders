@@ -25,7 +25,7 @@ class _AdRemovalSelectionDialogState extends State<AdRemovalSelectionDialog> {
   Future<void> _buyProduct(String productId) async {
     setState(() => isProcessing = true);
 
-    await widget.iapService.purchaseProduct(productId);
+    await widget.iapService.purchaseNonConsumable(productId);
 
     // Update the local state and notifier
     if (productId == IAPService.removeAllAdsId) {
