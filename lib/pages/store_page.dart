@@ -3,7 +3,6 @@ import 'package:snadders/pages/page_controllers/store_page_controller.dart';
 import '../widgets/store/boards_tab.dart';
 import '../widgets/store/coins_tab.dart';
 import '../widgets/store/diamonds_tab.dart';
-import '../widgets/store/offers_tab.dart';
 
 class StorePage extends StatefulWidget {
   final int initialTabIndex;
@@ -78,7 +77,6 @@ class _StorePageState extends State<StorePage> with SingleTickerProviderStateMix
               Tab(icon: Icon(Icons.monetization_on, color: Colors.yellow)),
               Tab(icon: Icon(Icons.diamond, color: Colors.blue)),
               Tab(icon: Icon(Icons.phone_android)),
-              Tab(icon: Icon(Icons.local_offer, color: Colors.red)),
             ],
             labelColor: Colors.white,
             unselectedLabelColor: Colors.grey,
@@ -91,7 +89,6 @@ class _StorePageState extends State<StorePage> with SingleTickerProviderStateMix
                 CoinsTab(),
                 DiamondsTab(),
                 BoardsTab(),
-                OffersTab(),
               ],
             ),
           ),
