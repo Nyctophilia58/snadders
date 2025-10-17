@@ -175,7 +175,7 @@ class _HomePageState extends State<HomePage>
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                        const StorePage(initialTabIndex: 0),
+                                        StorePage(initialTabIndex: 0, iapService: widget.iapService),
                                       ),
                                     );
                                   },
@@ -224,7 +224,7 @@ class _HomePageState extends State<HomePage>
                                         () async {
                                       final selectedBoardIndex = await showDialog<int>(
                                         context: context,
-                                        builder: (context) => const BoardSelector(),
+                                        builder: (context) => BoardSelector(iapService: widget.iapService,),
                                       );
 
                                       if (selectedBoardIndex != null) {
@@ -247,7 +247,7 @@ class _HomePageState extends State<HomePage>
                                         () async {
                                       final selectedBoardIndex = await showDialog<int>(
                                         context: context,
-                                        builder: (context) => const BoardSelector(),
+                                        builder: (context) => BoardSelector(iapService: widget.iapService,),
                                       );
 
                                       if (selectedBoardIndex != null) {

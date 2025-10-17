@@ -5,12 +5,14 @@ class BundleOfferCard extends StatelessWidget {
   final String title;
   final String price;
   final VoidCallback? onBuy;
+  final IAPService iapService;
 
   const BundleOfferCard({
     super.key,
     this.title = 'Bundle Offer',
     this.price = 'BDT 999.99',
     this.onBuy,
+    required this.iapService,
   });
 
   @override
@@ -53,8 +55,8 @@ class BundleOfferCard extends StatelessWidget {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onBuy ??
-                () {
-                  IAPService.instance.purchaseConsumable(IAPService.bundleOffer);
+                () async{
+                  await iapService.purchaseNonConsumable(IAPService.bundleOfferId);
                 },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,

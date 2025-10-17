@@ -4,9 +4,6 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:snadders/services/shared_prefs_service.dart';
 
 class IAPService {
-  IAPService._privateConstructor();
-  static final IAPService instance = IAPService._privateConstructor();
-
   // Consumable coin product IDs
   static const String _coins10kId = 'coins_10K';
   static const String _coins30kId = 'coins_30K';
@@ -24,7 +21,7 @@ class IAPService {
   static const String _diamonds6400Id = 'diamonds_6400';
 
   // Bundle offer ID
-  static const String _bundleOffer = 'bundle_offer_100k_coins_100_diamonds';
+  static const String _bundleOfferId = 'bundle_offer_100k_coins_100_diamonds';
 
   // Non-consumable product IDs
   static const String _removeAllAdsId = 'remove_all_ads';
@@ -47,7 +44,7 @@ class IAPService {
   static String get diamonds6400Id => _diamonds6400Id;
 
   // Getter for Bundle offer ID
-  static String get bundleOffer => _bundleOffer;
+  static String get bundleOfferId => _bundleOfferId;
 
   // Getters for Non-consumable product IDs
   static String get removeAllAdsId => _removeAllAdsId;
@@ -61,6 +58,9 @@ class IAPService {
   final ValueNotifier<int> coinsNotifier = ValueNotifier<int>(0);
   final ValueNotifier<int> diamondNotifier = ValueNotifier<int>(0);
 
+  // Notifiers for Board unlocks
+  final ValueNotifier<Set<int>> unlockedBoardsNotifier = ValueNotifier<Set<int>>({});
+
   // Notifiers for Non-consumable products
   final ValueNotifier<bool> allAdsRemovedNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> rewardedAdsRemovedNotifier = ValueNotifier<bool>(false);
@@ -68,6 +68,7 @@ class IAPService {
   // Getters for Consumable and Non-consumable states
   int get currentCoins => coinsNotifier.value;
   int get currentDiamonds => diamondNotifier.value;
+  Set<int> get unlockedBoards => unlockedBoardsNotifier.value;
   bool get isAllAdsRemoved => allAdsRemovedNotifier.value;
   bool get isRewardedAdsRemoved => rewardedAdsRemovedNotifier.value;
 
@@ -96,6 +97,12 @@ class IAPService {
     diamondNotifier.value = await _prefsService.loadDiamonds();
     allAdsRemovedNotifier.value = await _prefsService.loadAllAdsRemoved();
     rewardedAdsRemovedNotifier.value = await _prefsService.loadRewardedAdsRemoved();
+
+    final Set<int> unlockedBoards = {};
+    for (int i = 0; i < 8; i++) {
+      if (await _prefsService.loadBoardUnlocked(i)) unlockedBoards.add(i);
+    }
+    unlockedBoardsNotifier.value = unlockedBoards;
 
     final bool isAvailable = await _iap.isAvailable();
 
@@ -179,7 +186,7 @@ class IAPService {
         }
 
         // Bundle Offer
-        if (purchase.productID == bundleOffer) {
+        if (purchase.productID == bundleOfferId) {
           int coins = await _prefsService.loadCoins();
           int diamonds = await _prefsService.loadDiamonds();
 
@@ -191,6 +198,13 @@ class IAPService {
 
           coinsNotifier.value = coins;
           diamondNotifier.value = diamonds;
+        }
+
+        // Board unlocks
+        if (purchase.productID.startsWith('board_')) {
+          final index = int.parse(purchase.productID.split('_')[1]);
+          await _prefsService.saveBoardUnlocked(index, true);
+          unlockedBoardsNotifier.value = {...unlockedBoardsNotifier.value, index};
         }
       }
 
@@ -206,6 +220,7 @@ class IAPService {
     _subscription?.cancel();
     coinsNotifier.dispose();
     diamondNotifier.dispose();
+    unlockedBoardsNotifier.dispose();
     allAdsRemovedNotifier.dispose();
     rewardedAdsRemovedNotifier.dispose();
   }

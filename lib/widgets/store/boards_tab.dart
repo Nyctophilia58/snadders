@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:snadders/services/iap_services.dart';
 import '../../constants/board_constants.dart';
 import '../../services/shared_prefs_service.dart';
 import 'board_card.dart';
 
 class BoardsTab extends StatefulWidget {
-  const BoardsTab({super.key});
+  final IAPService iapService;
+  const BoardsTab({super.key, required this.iapService});
 
   @override
   State<BoardsTab> createState() => _BoardsTabState();
@@ -52,6 +54,8 @@ class _BoardsTabState extends State<BoardsTab> {
           price: price,
           imagePath: boardImages[index],
           isLocked: !unlockedBoards[index],
+          iapService: widget.iapService,
+          productId: 'board_$index',
         );
       }),
     );

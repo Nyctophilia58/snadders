@@ -6,8 +6,9 @@ class CoinCard extends StatelessWidget {
   final String amount;
   final String price;
   final String productId;
+  final IAPService iapService;
 
-  const CoinCard({super.key, required this.amount, required this.price, required this.productId});
+  const CoinCard({super.key, required this.amount, required this.price, required this.productId, required this.iapService});
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +20,8 @@ class CoinCard extends StatelessWidget {
           Icon(Icons.monetization_on, size: 40, color: Colors.yellow),
           Text(amount, style: TextStyle(color: Colors.white)),
           ElevatedButton(
-            onPressed: () {
-              IAPService.instance.purchaseConsumable(productId);
+            onPressed: ()  async {
+              await iapService.purchaseConsumable(productId);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: Size(80, 30)),
             child: Text(price, style: TextStyle(fontSize: 10)),

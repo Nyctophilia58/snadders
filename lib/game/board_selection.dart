@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/board_constants.dart';
 import '../pages/store_page.dart';
+import '../services/iap_services.dart';
 import 'controllers/board_selector_controller.dart';
 
 class BoardSelector extends StatefulWidget {
-  const BoardSelector({super.key});
+  final IAPService iapService;
+  const BoardSelector({super.key, required this.iapService});
 
   @override
   State<BoardSelector> createState() => _BoardSelectorState();
@@ -118,7 +120,7 @@ class _BoardSelectorState extends State<BoardSelector> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => StorePage(initialTabIndex: 2),
+              builder: (_) => StorePage(initialTabIndex: 2, iapService: widget.iapService,),
             ),
           );
         }

@@ -14,7 +14,7 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   final SignInPageController controller = SignInPageController();
-  final IAPService _iapService = IAPService.instance;
+  final IAPService _iapService = IAPService();
   bool _isLoading = false;
 
   @override

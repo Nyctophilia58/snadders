@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/store_page_controller.dart';
+import 'package:snadders/services/iap_services.dart';
 import '../widgets/store/boards_tab.dart';
 import '../widgets/store/coins_tab.dart';
 import '../widgets/store/diamonds_tab.dart';
 
 class StorePage extends StatefulWidget {
+  final IAPService iapService;
   final int initialTabIndex;
-  const StorePage({super.key, this.initialTabIndex = 0});
+  const StorePage({super.key, this.initialTabIndex = 0, required this.iapService});
 
   @override
   State<StorePage> createState() => _StorePageState();
@@ -85,10 +87,10 @@ class _StorePageState extends State<StorePage> with SingleTickerProviderStateMix
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
-                CoinsTab(),
-                DiamondsTab(),
-                BoardsTab(),
+              children: [
+                CoinsTab(iapService: widget.iapService),
+                DiamondsTab(iapService: widget.iapService),
+                BoardsTab(iapService: widget.iapService),
               ],
             ),
           ),

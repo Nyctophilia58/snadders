@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:snadders/services/iap_services.dart';
 
 class BoardCard extends StatelessWidget {
   final String price;
   final String imagePath;
   final bool isLocked;
+  final String productId;
+  final IAPService iapService;
 
   const BoardCard({
     super.key,
     required this.price,
     required this.imagePath,
     required this.isLocked,
+    required this.productId,
+    required this.iapService,
   });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // Board image + card
         Card(
           color: Colors.grey[800],
           child: Column(
@@ -24,40 +30,48 @@ class BoardCard extends StatelessWidget {
             children: [
               Expanded(
                 child: SvgPicture.asset(
-                    imagePath,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-                ),
-              Padding(
-                padding: isLocked ? EdgeInsets.all(8.0) : EdgeInsets.all(0.0),
-                child: Column(
-                  children: [
-                    if (isLocked)
-                      ElevatedButton(
-                        onPressed: !isLocked ? null : () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Purchased for $price')),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                        ),
-                        child: Text(isLocked ? price : '', style: TextStyle(fontSize: 12)),
-                      ),
-                  ],
+                  imagePath,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
                 ),
               ),
             ],
           ),
         ),
 
+        // Lock overlay (but does not block button)
         if (isLocked)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.3),
-              child: Center(
+              color: Colors.black.withOpacity(0.4),
+              child: const Center(
                 child: Icon(Icons.lock, color: Colors.white, size: 40),
+              ),
+            ),
+          ),
+
+        // Buy button overlayed at bottom center
+        if (isLocked)
+          Positioned(
+            bottom: 8,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  await iapService.purchaseConsumable(productId);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Purchasing $productId...')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                child: Text(
+                  price,
+                  style: const TextStyle(fontSize: 12, color: Colors.white),
+                ),
               ),
             ),
           ),
