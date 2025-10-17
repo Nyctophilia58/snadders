@@ -43,7 +43,7 @@ class BoardCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
-                        child: Text(isLocked ? price : ''),
+                        child: Text(isLocked ? price : '', style: TextStyle(fontSize: 12)),
                       ),
                   ],
                 ),
