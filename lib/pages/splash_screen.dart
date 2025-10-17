@@ -14,7 +14,7 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  final IAPService _iapService = IAPService();
+  final IAPService _iapService = IAPService.instance;
   late final SplashScreenController controller;
 
   @override
