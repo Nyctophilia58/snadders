@@ -27,6 +27,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   void _initApp() async {
     await _iapService.initialize();
 
+    if(!mounted) return;
     await controller.initializeApp();
 
     if (controller.isSignedIn()) {

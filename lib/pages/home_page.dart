@@ -298,24 +298,16 @@ class _HomePageState extends State<HomePage>
                                           return _buildSmallButton(
                                             'Remove ADs',
                                             Icons.video_library,
-                                              () async {
-                                                final selectedProductId = await showAdRemovalSelectionDialog(
-                                                  context,
-                                                  allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
-                                                  rewardedAdsRemoved: widget.iapService.rewardedAdsRemovedNotifier.value,
-                                                );
-
-                                                if (selectedProductId != null) {
-                                                  await widget.iapService.purchaseProduct(selectedProductId);
-                                                }
-                                              },
+                                            () async {
+                                              await showAdRemovalSelectionDialog(context, widget.iapService);
+                                              setState(() {});
+                                            },
                                             showFire: true,
                                           );
                                         },
                                       );
                                     },
                                   ),
-
                                 ],
                               ),
                               SizedBox(height: bottomPadding + 60),
