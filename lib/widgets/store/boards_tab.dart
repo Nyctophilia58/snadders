@@ -3,6 +3,7 @@ import 'package:snadders/services/iap_services.dart';
 import '../../constants/board_constants.dart';
 import '../../services/shared_prefs_service.dart';
 import 'board_card.dart';
+import 'boards_bundle_card.dart';
 
 class BoardsTab extends StatefulWidget {
   final IAPService iapService;
@@ -49,15 +50,24 @@ class _BoardsTabState extends State<BoardsTab> {
       crossAxisCount: 3,
       padding: const EdgeInsets.all(8.0),
       childAspectRatio: 0.75,
-      children: List.generate(boardImages.length, (index) {
-        return BoardCard(
-          price: price,
-          imagePath: boardImages[index],
-          isLocked: !unlockedBoards[index],
+      children: [
+        // Regular boards
+        ...List.generate(boardImages.length, (index) {
+          return BoardCard(
+            price: "BDT 49.99",
+            imagePath: boardImages[index],
+            isLocked: !unlockedBoards[index],
+            iapService: widget.iapService,
+            productId: 'board_$index',
+          );
+        }),
+
+        // Bundle card
+        BundleBoardCard(
+          price: "BDT 199.99",
           iapService: widget.iapService,
-          productId: 'board_$index',
-        );
-      }),
+        ),
+      ],
     );
   }
 }

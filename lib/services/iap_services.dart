@@ -20,8 +20,9 @@ class IAPService {
   static const String _diamonds3200Id = 'diamonds_3200';
   static const String _diamonds6400Id = 'diamonds_6400';
 
-  // Bundle offer ID
+  // Bundle IDs
   static const String _bundleOfferId = 'bundle_offer_100k_coins_100_diamonds';
+  static const String _bundleBoardsId = "bundle_boards";
 
   // Non-consumable product IDs
   static const String _removeAllAdsId = 'remove_all_ads';
@@ -45,6 +46,7 @@ class IAPService {
 
   // Getter for Bundle offer ID
   static String get bundleOfferId => _bundleOfferId;
+  static String get bundleBoardsId => _bundleBoardsId;
 
   // Getters for Non-consumable product IDs
   static String get removeAllAdsId => _removeAllAdsId;
@@ -198,6 +200,16 @@ class IAPService {
 
           coinsNotifier.value = coins;
           diamondNotifier.value = diamonds;
+        }
+
+        // Bundle Boards (Non-consumable)
+        if (purchase.productID == bundleBoardsId) {
+          Set<int> allBoards = {};
+          for (int i = 0; i < 8; i++) {
+            await _prefsService.saveBoardUnlocked(i, true);
+            allBoards.add(i);
+          }
+          unlockedBoardsNotifier.value = allBoards;
         }
 
         // Board unlocks

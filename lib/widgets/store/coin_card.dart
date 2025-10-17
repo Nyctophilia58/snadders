@@ -24,7 +24,7 @@ class CoinCard extends StatelessWidget {
               await iapService.purchaseConsumable(productId);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: Size(80, 30)),
-            child: Text(price, style: TextStyle(fontSize: 10)),
+            child: Text(price, style: TextStyle(color: Colors.white, fontSize: 10)),
           ),
         ],
       ),
