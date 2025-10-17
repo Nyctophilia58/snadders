@@ -7,7 +7,7 @@ class IAPService {
   IAPService._privateConstructor();
   static final IAPService instance = IAPService._privateConstructor();
 
-  // Consumable product IDs
+  // Consumable coin product IDs
   static const String _coins10kId = 'coins_10K';
   static const String _coins30kId = 'coins_30K';
   static const String _coins100kId = 'coins_100K';
@@ -15,17 +15,33 @@ class IAPService {
   static const String _coins1MId = 'coins_1M';
   static const String _coins2MId = 'coins_2M';
 
+  // Consumable diamond product IDs
+  static const String _diamonds200Id = 'diamonds_200';
+  static const String _diamonds400Id = 'diamonds_400';
+  static const String _diamonds800Id = 'diamonds_800';
+  static const String _diamonds1600Id = 'diamonds_1600';
+  static const String _diamonds3200Id = 'diamonds_3200';
+  static const String _diamonds6400Id = 'diamonds_6400';
+
   // Non-consumable product IDs
   static const String _removeAllAdsId = 'remove_all_ads';
   static const String _removeRewardedAdsId = 'remove_rewarded_ads';
 
-  // Getters for Consumable product IDs
+  // Getters for Consumable coin product IDs
   static String get coins10kId => _coins10kId;
   static String get coins30kId => _coins30kId;
   static String get coins100kId => _coins100kId;
   static String get coins250kId => _coins250kId;
   static String get coins1MId => _coins1MId;
   static String get coins2MId => _coins2MId;
+
+  // Getters for Consumable diamond product IDs
+  static String get diamonds200Id => _diamonds200Id;
+  static String get diamonds400Id => _diamonds400Id;
+  static String get diamonds800Id => _diamonds800Id;
+  static String get diamonds1600Id => _diamonds1600Id;
+  static String get diamonds3200Id => _diamonds3200Id;
+  static String get diamonds6400Id => _diamonds6400Id;
 
   // Getters for Non-consumable product IDs
   static String get removeAllAdsId => _removeAllAdsId;
@@ -37,6 +53,7 @@ class IAPService {
 
   // Notifiers for Consumer product
   final ValueNotifier<int> coinsNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<int> diamondNotifier = ValueNotifier<int>(0);
 
   // Notifiers for Non-consumable products
   final ValueNotifier<bool> allAdsRemovedNotifier = ValueNotifier<bool>(false);
@@ -44,9 +61,11 @@ class IAPService {
 
   // Getters for Consumable and Non-consumable states
   int get currentCoins => coinsNotifier.value;
+  int get currentDiamonds => diamondNotifier.value;
   bool get isAllAdsRemoved => allAdsRemovedNotifier.value;
   bool get isRewardedAdsRemoved => rewardedAdsRemovedNotifier.value;
 
+  // Map for coins (for adding after purchase)
   final Map<String, int> _coinMap = {
     _coins10kId: 10000,
     _coins30kId: 30000,
@@ -56,8 +75,19 @@ class IAPService {
     _coins2MId: 2000000,
   };
 
+  // Map for diamonds (for adding after purchase)
+  final Map<String, int> _diamondMap = {
+    _diamonds200Id: 200,
+    _diamonds400Id: 400,
+    _diamonds800Id: 800,
+    _diamonds1600Id: 1600,
+    _diamonds3200Id: 3200,
+    _diamonds6400Id: 6400,
+  };
+
   Future<void> initialize() async {
     coinsNotifier.value = await _prefsService.loadCoins();
+    diamondNotifier.value = await _prefsService.loadDiamonds();
     allAdsRemovedNotifier.value = await _prefsService.loadAllAdsRemoved();
     rewardedAdsRemovedNotifier.value = await _prefsService.loadRewardedAdsRemoved();
 
@@ -96,6 +126,7 @@ class IAPService {
     }
   }
 
+  // Purchase Non-Consumable Product
   Future<void> purchaseNonConsumable(String productId) async {
     try {
       final response = await _iap.queryProductDetails({productId});
@@ -125,12 +156,20 @@ class IAPService {
           rewardedAdsRemovedNotifier.value = true;
         }
 
-        // Consumables
+        // Coins
         if (_coinMap.containsKey(purchase.productID)) {
           int coins = await _prefsService.loadCoins();
           coins += _coinMap[purchase.productID]!;
           await _prefsService.saveCoins(coins);
           coinsNotifier.value = coins;
+        }
+
+        // Diamonds
+        if (_diamondMap.containsKey(purchase.productID)) {
+          int diamonds = await _prefsService.loadDiamonds();
+          diamonds += _diamondMap[purchase.productID]!;
+          await _prefsService.saveDiamonds(diamonds);
+          diamondNotifier.value = diamonds;
         }
       }
 
