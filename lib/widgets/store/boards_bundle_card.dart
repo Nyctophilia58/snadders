@@ -50,7 +50,7 @@ class BundleBoardCard extends StatelessWidget {
                       ),
                       child: Text(
                         price,
-                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
                   )

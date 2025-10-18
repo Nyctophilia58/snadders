@@ -5,12 +5,12 @@ import 'package:snadders/services/shared_prefs_service.dart';
 
 class IAPService {
   // Consumable coin product IDs
-  static const String _coins10kId = 'coins_10K';
-  static const String _coins30kId = 'coins_30K';
-  static const String _coins100kId = 'coins_100K';
-  static const String _coins250kId = 'coins_250K';
-  static const String _coins1MId = 'coins_1M';
-  static const String _coins2MId = 'coins_2M';
+  static const String _coins10kId = 'coins_10k';
+  static const String _coins30kId = 'coins_30k';
+  static const String _coins100kId = 'coins_100k';
+  static const String _coins250kId = 'coins_250k';
+  static const String _coins1MId = 'coins_1m';
+  static const String _coins2MId = 'coins_2m';
 
   // Consumable diamond product IDs
   static const String _diamonds200Id = 'diamonds_200';

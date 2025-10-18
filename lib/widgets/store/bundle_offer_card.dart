@@ -10,7 +10,7 @@ class BundleOfferCard extends StatelessWidget {
   const BundleOfferCard({
     super.key,
     this.title = 'Bundle Offer',
-    this.price = 'BDT 999.99',
+    this.price = 'BDT 750',
     this.onBuy,
     required this.iapService,
   });

@@ -54,7 +54,7 @@ class _BoardsTabState extends State<BoardsTab> {
         // Regular boards
         ...List.generate(boardImages.length, (index) {
           return BoardCard(
-            price: "BDT 49.99",
+            price: "BDT 50",
             imagePath: boardImages[index],
             isLocked: !unlockedBoards[index],
             iapService: widget.iapService,
@@ -64,7 +64,7 @@ class _BoardsTabState extends State<BoardsTab> {
 
         // Bundle card
         BundleBoardCard(
-          price: "BDT 199.99",
+          price: "BDT 200",
           iapService: widget.iapService,
         ),
       ],
