@@ -15,45 +15,34 @@ class BoardSelector extends StatefulWidget {
 
 class _BoardSelectorState extends State<BoardSelector> {
   final BoardSelectorController _controller = BoardSelectorController();
-  List<bool> unlockedBoards = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUnlockedBoards();
-  }
-
-  Future<void> _loadUnlockedBoards() async {
-    final boards = await _controller.loadUnlockedBoards();
-    setState(() => unlockedBoards = boards);
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (unlockedBoards.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return ValueListenableBuilder<Set<int>>(
+      valueListenable: widget.iapService.unlockedBoardsNotifier,
+      builder: (context, unlockedBoardsSet, _) {
+        final isUnlocked = unlockedBoardsSet.contains(_controller.currentBoardIndex);
 
-    final isUnlocked = unlockedBoards[_controller.currentBoardIndex];
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        height: 600,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(child: _buildBoardPreview(isUnlocked)),
-            _buildNavigation(),
-            _buildActionButton(context, isUnlocked),
-          ],
-        ),
-      ),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            height: 600,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(child: _buildBoardPreview(isUnlocked)),
+                _buildNavigation(),
+                _buildActionButton(context, isUnlocked),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -120,7 +109,7 @@ class _BoardSelectorState extends State<BoardSelector> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => StorePage(initialTabIndex: 2, iapService: widget.iapService,),
+              builder: (_) => StorePage(initialTabIndex: 2, iapService: widget.iapService),
             ),
           );
         }

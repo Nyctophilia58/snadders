@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:snadders/services/shared_prefs_service.dart';
 
+import '../constants/board_constants.dart';
+
 class IAPService {
   // Consumable coin product IDs
   static const String _coins10kId = 'coins_10k';
@@ -101,8 +103,10 @@ class IAPService {
     rewardedAdsRemovedNotifier.value = await _prefsService.loadRewardedAdsRemoved();
 
     final Set<int> unlockedBoards = {};
-    for (int i = 0; i < 8; i++) {
-      if (await _prefsService.loadBoardUnlocked(i)) unlockedBoards.add(i);
+    for (int i = 0; i < boardImages.length; i++) {
+      bool isUnlocked = i < 3 || await _prefsService.loadBoardUnlocked(i);
+      if (isUnlocked) unlockedBoards.add(i);
+      await _prefsService.saveBoardUnlocked(i, isUnlocked);
     }
     unlockedBoardsNotifier.value = unlockedBoards;
 

@@ -1,73 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:snadders/services/iap_services.dart';
 import '../../constants/board_constants.dart';
-import '../../services/shared_prefs_service.dart';
-import 'board_card.dart';
-import 'boards_bundle_card.dart';
+import '../../widgets/store/board_card.dart';
+import '../../widgets/store/boards_bundle_card.dart';
+import '../../services/iap_services.dart';
 
-class BoardsTab extends StatefulWidget {
+class BoardsTab extends StatelessWidget {
   final IAPService iapService;
   const BoardsTab({super.key, required this.iapService});
 
   @override
-  State<BoardsTab> createState() => _BoardsTabState();
-}
-
-class _BoardsTabState extends State<BoardsTab> {
-  final SharedPrefsService _prefsService = SharedPrefsService();
-  List<bool> unlockedBoards = [];
-
-  final String price = 'BDT 49.99';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUnlockedBoards();
-  }
-
-  Future<void> _loadUnlockedBoards() async {
-    List<bool> boards = List.generate(
-      boardImages.length,
-          (index) => index < defaultUnlockedBoards,
-    );
-
-    for (int i = 0; i < boardImages.length; i++) {
-      boards[i] = await _prefsService.loadBoardUnlocked(i) || boards[i];
-    }
-
-    setState(() {
-      unlockedBoards = boards;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (unlockedBoards.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return ValueListenableBuilder<Set<int>>(
+      valueListenable: iapService.unlockedBoardsNotifier,
+      builder: (context, unlockedBoardsSet, _) {
+        List<bool> unlockedBoards = List.generate(
+          boardImages.length,
+              (index) => unlockedBoardsSet.contains(index),
+        );
 
-    return GridView.count(
-      crossAxisCount: 3,
-      padding: const EdgeInsets.all(8.0),
-      childAspectRatio: 0.75,
-      children: [
-        // Regular boards
-        ...List.generate(boardImages.length, (index) {
-          return BoardCard(
-            price: "BDT 50",
-            imagePath: boardImages[index],
-            isLocked: !unlockedBoards[index],
-            iapService: widget.iapService,
-            productId: 'board_$index',
-          );
-        }),
+        return GridView.count(
+          crossAxisCount: 3,
+          padding: const EdgeInsets.all(8.0),
+          childAspectRatio: 0.75,
+          children: [
+            ...List.generate(boardImages.length, (index) {
+              return BoardCard(
+                price: "BDT 50",
+                imagePath: boardImages[index],
+                isLocked: !unlockedBoards[index],
+                iapService: iapService,
+                productId: 'board_$index',
+              );
+            }),
 
-        // Bundle card
-        BundleBoardCard(
-          price: "BDT 200",
-          iapService: widget.iapService,
-        ),
-      ],
+            // Bundle card
+            BundleBoardCard(
+              price: "BDT 200",
+              iapService: iapService,
+            ),
+          ],
+        );
+      },
     );
   }
 }
