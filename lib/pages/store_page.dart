@@ -17,25 +17,25 @@ class StorePage extends StatefulWidget {
 class _StorePageState extends State<StorePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final StorePageController _controller = StorePageController();
-  int coins = 0;
-  int diamonds = 0;
+  // int coins = 0;
+  // int diamonds = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.index = widget.initialTabIndex;
-    _loadResources();
+    // _loadResources();
   }
 
-  void _loadResources() async {
-    final loadedCoins = await _controller.loadCoins();
-    final loadedDiamonds = await _controller.loadDiamonds();
-    setState(() {
-      coins = loadedCoins;
-      diamonds = loadedDiamonds;
-    });
-  }
+  // void _loadResources() async {
+  //   final loadedCoins = await _controller.loadCoins();
+  //   final loadedDiamonds = await _controller.loadDiamonds();
+  //   setState(() {
+  //     coins = loadedCoins;
+  //     diamonds = loadedDiamonds;
+  //   });
+  // }
 
   @override
   void dispose() {
@@ -61,13 +61,25 @@ class _StorePageState extends State<StorePage> with SingleTickerProviderStateMix
                 Row(
                   children: [
                     const Icon(Icons.monetization_on, color: Colors.yellow),
-                    Text(' $coins', style: const TextStyle(color: Colors.white)),
+                    ValueListenableBuilder<int>(
+                      valueListenable: widget.iapService.coinsNotifier,
+                      builder: (context, coins, _) {
+                        if (!mounted) return const SizedBox();
+                        return Text(' $coins', style: const TextStyle(color: Colors.white));
+                      },
+                    ),
                   ],
                 ),
                 Row(
                   children: [
                     const Icon(Icons.diamond, color: Colors.blue),
-                    Text(' $diamonds', style: const TextStyle(color: Colors.white)),
+                    ValueListenableBuilder<int>(
+                      valueListenable: widget.iapService.diamondsNotifier,
+                      builder: (context, diamonds, _) {
+                        if (!mounted) return const SizedBox();
+                        return Text(' $diamonds', style: const TextStyle(color: Colors.white));
+                      },
+                    ),
                   ],
                 ),
               ],

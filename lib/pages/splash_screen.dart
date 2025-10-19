@@ -44,7 +44,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => SignInPage()),
+        MaterialPageRoute(builder: (_) => SignInPage(iapService: _iapService)),
       );
     }
   }
@@ -52,7 +52,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void dispose() {
     super.dispose();
-    _iapService.dispose();
   }
 
   @override

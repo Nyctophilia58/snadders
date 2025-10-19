@@ -60,9 +60,6 @@ class BoardCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () async {
                   await iapService.purchaseConsumable(productId);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Purchasing $productId...')),
-                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,

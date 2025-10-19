@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:snadders/services/iap_services.dart';
+
 import '../../services/ad_services/ad_interstitial_service.dart';
 import '../../services/ad_services/ad_reward_service.dart';
 import '../../services/shared_prefs_service.dart';
@@ -74,11 +76,12 @@ class HomePageController {
     });
   }
 
-  Future<bool> claimFreeCoins() async {
+  Future<bool> claimFreeCoins({required IAPService iapService}) async {
     final adWatched = await AdRewardService.showRewardedAd();
     if (adWatched) {
       coins += 10;
       await _prefsService.saveCoins(coins);
+      iapService.coinsNotifier.value = coins; // notify listeners
     }
     return adWatched;
   }

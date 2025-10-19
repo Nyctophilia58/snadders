@@ -58,7 +58,7 @@ class IAPService {
 
   // Notifiers for Consumer product
   final ValueNotifier<int> coinsNotifier = ValueNotifier<int>(0);
-  final ValueNotifier<int> diamondNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<int> diamondsNotifier = ValueNotifier<int>(0);
 
   // Notifiers for Board unlocks
   final ValueNotifier<Set<int>> unlockedBoardsNotifier = ValueNotifier<Set<int>>({});
@@ -69,7 +69,7 @@ class IAPService {
 
   // Getters for Consumable and Non-consumable states
   int get currentCoins => coinsNotifier.value;
-  int get currentDiamonds => diamondNotifier.value;
+  int get currentDiamonds => diamondsNotifier.value;
   Set<int> get unlockedBoards => unlockedBoardsNotifier.value;
   bool get isAllAdsRemoved => allAdsRemovedNotifier.value;
   bool get isRewardedAdsRemoved => rewardedAdsRemovedNotifier.value;
@@ -96,7 +96,7 @@ class IAPService {
 
   Future<void> initialize() async {
     coinsNotifier.value = await _prefsService.loadCoins();
-    diamondNotifier.value = await _prefsService.loadDiamonds();
+    diamondsNotifier.value = await _prefsService.loadDiamonds();
     allAdsRemovedNotifier.value = await _prefsService.loadAllAdsRemoved();
     rewardedAdsRemovedNotifier.value = await _prefsService.loadRewardedAdsRemoved();
 
@@ -184,7 +184,7 @@ class IAPService {
           int diamonds = await _prefsService.loadDiamonds();
           diamonds += _diamondMap[purchase.productID]!;
           await _prefsService.saveDiamonds(diamonds);
-          diamondNotifier.value = diamonds;
+          diamondsNotifier.value = diamonds;
         }
 
         // Bundle Offer
@@ -199,7 +199,7 @@ class IAPService {
           await _prefsService.saveDiamonds(diamonds);
 
           coinsNotifier.value = coins;
-          diamondNotifier.value = diamonds;
+          diamondsNotifier.value = diamonds;
         }
 
         // Bundle Boards (Non-consumable)
@@ -231,7 +231,7 @@ class IAPService {
   void dispose() {
     _subscription?.cancel();
     coinsNotifier.dispose();
-    diamondNotifier.dispose();
+    diamondsNotifier.dispose();
     unlockedBoardsNotifier.dispose();
     allAdsRemovedNotifier.dispose();
     rewardedAdsRemovedNotifier.dispose();

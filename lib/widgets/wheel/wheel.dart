@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:snadders/services/iap_services.dart';
 import 'package:snadders/widgets/exit_button.dart';
 import '../../services/shared_prefs_service.dart';
 import 'spin_choice_card.dart';
@@ -8,8 +9,9 @@ import 'spin_choice_card.dart';
 
 class Wheel extends StatefulWidget {
   final VoidCallback? onSpinCompleted;
+  final IAPService iapService;
 
-  const Wheel({super.key, this.onSpinCompleted});
+  const Wheel({super.key, this.onSpinCompleted, required this.iapService});
 
   @override
   State<Wheel> createState() => _WheelState();
@@ -181,7 +183,8 @@ class _WheelState extends State<Wheel> with SingleTickerProviderStateMixin {
             spinForCoins
                 ? "You earned ${earnedValue.toInt()} coins!"
                 : "You earned ${earnedValue.toInt()} diamonds!",
-          ),          duration: const Duration(seconds: 2),
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
     });
@@ -190,10 +193,14 @@ class _WheelState extends State<Wheel> with SingleTickerProviderStateMixin {
 
     if (spinForCoins) {
       int oldCoins = await _prefs.loadCoins();
-      await _prefs.saveCoins(oldCoins + earnedValue.toInt());
+      int newCoins = oldCoins + earnedValue.toInt();
+      await _prefs.saveCoins(newCoins);
+      widget.iapService.coinsNotifier.value = newCoins; // notify listeners
     } else {
       int oldDiamonds = await _prefs.loadDiamonds();
-      await _prefs.saveDiamonds(oldDiamonds + earnedValue.toInt());
+      int newDiamonds = oldDiamonds + earnedValue.toInt();
+      await _prefs.saveDiamonds(newDiamonds);
+      widget.iapService.diamondsNotifier.value = newDiamonds; // notify listeners
     }
 
     if (widget.onSpinCompleted != null) {

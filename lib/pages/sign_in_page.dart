@@ -6,7 +6,8 @@ import '../widgets/exit_button.dart';
 import '../pages/home_page.dart';
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+  final IAPService iapService;
+  const SignInPage({super.key, required this.iapService});
 
   @override
   State<SignInPage> createState() => _SignInPageState();
@@ -14,33 +15,21 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   final SignInPageController controller = SignInPageController();
-  final IAPService _iapService = IAPService();
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeIAP();
-  }
-
-  Future<void> _initializeIAP() async {
-    setState(() => _isLoading = true);
-    await _iapService.initialize();
-    setState(() => _isLoading = false);
   }
 
   Future<void> _navigateToHome(String username, bool isGuest) async {
-    setState(() => _isLoading = true);
-    await _iapService.initialize();
-    setState(() => _isLoading = false);
-
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => HomePage(
           username: username,
           isGuest: isGuest,
-          iapService: _iapService,
+          iapService: widget.iapService,
         ),
       ),
     );

@@ -146,10 +146,12 @@ class _HomePageState extends State<HomePage>
                                         const Icon(Icons.monetization_on,
                                             color: Colors.yellow, size: 18),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          controller.coins.toString(),
-                                          style: const TextStyle(
-                                              color: Colors.white),
+                                        ValueListenableBuilder<int>(
+                                          valueListenable: widget.iapService.coinsNotifier,
+                                          builder: (context, coins, _) {
+                                            if (!mounted) return const SizedBox();
+                                            return Text('$coins', style: const TextStyle(color: Colors.white));
+                                          },
                                         ),
                                       ],
                                     ),
@@ -162,9 +164,12 @@ class _HomePageState extends State<HomePage>
                                 const Icon(Icons.diamond,
                                     color: Colors.lightBlueAccent),
                                 const SizedBox(width: 4),
-                                Text(
-                                  controller.diamonds.toString(),
-                                  style: const TextStyle(color: Colors.white),
+                                ValueListenableBuilder<int>(
+                                  valueListenable: widget.iapService.diamondsNotifier,
+                                  builder: (context, diamonds, _) {
+                                    if (!mounted) return const SizedBox();
+                                    return Text('$diamonds', style: const TextStyle(color: Colors.white));
+                                  },
                                 ),
                                 const SizedBox(width: 12),
                                 IconButton(
@@ -368,9 +373,9 @@ class _HomePageState extends State<HomePage>
                         }
 
                         // Ads available, try to claim coins
-                        bool adWatched = await controller.claimFreeCoins();
+                        bool adWatched = await controller.claimFreeCoins(iapService: widget.iapService);
+                        if (!mounted) return;
                         if (adWatched) {
-                          setState(() {});
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("You earned 10 coins!")),
                           );
@@ -394,7 +399,7 @@ class _HomePageState extends State<HomePage>
                           builder: (context) => Dialog(
                             backgroundColor: Colors.transparent,
                             insetPadding: const EdgeInsets.all(16),
-                            child: Wheel(onSpinCompleted: _onSpinCompleted),
+                            child: Wheel(onSpinCompleted: _onSpinCompleted, iapService: widget.iapService,),
                           ),
                         );
                       } else {
