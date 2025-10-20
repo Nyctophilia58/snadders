@@ -63,33 +63,49 @@ class _SettingsPageState extends State<SettingsPage> {
               }),
               const SizedBox(height: 20),
 
-              // Board theme selection
-              _buildDropdown("Board Theme", controller.selectedBoard, controller.boardThemes, (val) {
+              // Board selection
+              _buildDropdown("Boards", controller.selectedBoard, controller.boardThemes, (val) {
                 setState(() {
                   controller.selectBoard(val);
                 });
               }),
-              const Divider(color: Colors.white54, height: 30),
 
               // Other options
               _buildOption("Store", () {
                 controller.openStore();
               }),
+
+              // Help & Support
+              _buildOption("Help & Support", () {
+                controller.openHelpSupport();
+              }),
+
+              // Notifications
               _buildOption("Notifications", () {
                 controller.openNotifications();
               }),
+
+              // Troubleshoot
               _buildOption("Troubleshoot", () {
                 controller.troubleshoot();
               }),
+
+              // Account Deletion
               _buildOption("Request Account Deletion", () {
                 controller.requestAccountDeletion();
               }),
+
+              // Rate Us
               _buildOption("Rate Us", () {
                 controller.rateUs();
               }),
+
+              // Share
               _buildOption("Share", () {
                 controller.shareApp();
               }),
+
+              // App version
               _buildOption("Version: 1.0.0", null, showArrow: false),
               const SizedBox(height: 20),
 

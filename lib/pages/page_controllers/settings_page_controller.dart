@@ -19,6 +19,7 @@ class SettingsPageController {
   }
 
   void openStore() {}
+  void openHelpSupport() {}
   void openNotifications() {}
   void troubleshoot() {}
   void requestAccountDeletion() {}
