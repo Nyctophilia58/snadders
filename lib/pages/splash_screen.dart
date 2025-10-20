@@ -24,19 +24,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     _initApp();
   }
 
-  void _initApp() async {
+  Future<void> _initApp() async {
     await _iapService.initialize();
 
-    if(!mounted) return;
-    await controller.initializeApp();
+    if (!mounted) return;
 
-    if (controller.isSignedIn()) {
+    // Initialize app safely with mounted check
+    await controller.initializeAppSafe(mountedCheck: () => mounted);
+
+    if (!mounted) return;
+
+    // Read sign-in values safely while mounted
+    final isSignedIn = controller.isSignedIn();
+    final username = controller.getUsername();
+    final isGuest = controller.getIsGuest();
+
+    if (!mounted) return;
+
+    // Navigate to the correct page
+    if (isSignedIn) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => HomePage(
-            username: controller.getUsername(),
-            isGuest: controller.getIsGuest(),
+            username: username,
+            isGuest: isGuest,
             iapService: _iapService,
           ),
         ),
@@ -44,14 +56,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => SignInPage(iapService: _iapService)),
+        MaterialPageRoute(
+          builder: (_) => SignInPage(iapService: _iapService),
+        ),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   @override

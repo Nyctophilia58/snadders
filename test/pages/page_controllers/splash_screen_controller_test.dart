@@ -23,8 +23,7 @@ void main() {
     mockState = MockSignInState();
 
     // Mock provider read for notifier
-    when(() => mockRef.read(signInProvider.notifier))
-        .thenReturn(mockNotifier);
+    when(() => mockRef.read(signInProvider.notifier)).thenReturn(mockNotifier);
 
     // Mock provider read for state
     when(() => mockRef.read(signInProvider)).thenReturn(mockState);
@@ -32,31 +31,32 @@ void main() {
     controller = SplashScreenController(mockRef);
   });
 
-  test('InitializeApp calls Google and guest sign-in check', () async {
+  test('initializeAppSafe calls Google and guest sign-in check when not signed in', () async {
     when(() => mockState.signedIn).thenReturn(false);
     when(() => mockNotifier.checkSignInGoogle()).thenAnswer((_) async {});
     when(() => mockNotifier.checkSignInGuest()).thenAnswer((_) async {});
 
-    // Run initializeApp
-    await controller.initializeApp();
+    // Run initializeAppSafe with mountedCheck always true
+    await controller.initializeAppSafe(mountedCheck: () => true);
 
-    // Verify methods called
+    // Verify both Google and guest sign-in called
     verify(() => mockNotifier.checkSignInGoogle()).called(1);
     verify(() => mockNotifier.checkSignInGuest()).called(1);
   });
 
-  test('InitializeApp skips guest check if already signed in', () async {
+  test('initializeAppSafe skips guest check if already signed in', () async {
     when(() => mockState.signedIn).thenReturn(true);
     when(() => mockNotifier.checkSignInGoogle()).thenAnswer((_) async {});
     when(() => mockNotifier.checkSignInGuest()).thenAnswer((_) async {});
 
-    await controller.initializeApp();
+    // Run initializeAppSafe
+    await controller.initializeAppSafe(mountedCheck: () => true);
 
     verify(() => mockNotifier.checkSignInGoogle()).called(1);
     verifyNever(() => mockNotifier.checkSignInGuest());
   });
 
-  test('IsSignedIn returns correct state', () {
+  test('isSignedIn returns correct value', () {
     when(() => mockState.signedIn).thenReturn(true);
     expect(controller.isSignedIn(), true);
 
@@ -64,12 +64,12 @@ void main() {
     expect(controller.isSignedIn(), false);
   });
 
-  test('GetUsername returns correct username', () {
+  test('getUsername returns correct value', () {
     when(() => mockState.username).thenReturn('test_user');
     expect(controller.getUsername(), 'test_user');
   });
 
-  test('GetIsGuest returns correct guest flag', () {
+  test('getIsGuest returns correct value', () {
     when(() => mockState.isGuest).thenReturn(true);
     expect(controller.getIsGuest(), true);
 
