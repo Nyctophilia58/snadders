@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/settings_page_controller.dart';
+import 'package:snadders/services/iap_services.dart';
 import '../widgets/exit_button.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  final IAPService iapService;
+  const SettingsPage({super.key, required this.iapService});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -72,7 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
               // Other options
               _buildOption("Store", () {
-                controller.openStore();
+                controller.openStore(context, widget.iapService);
               }),
 
               // Help & Support
@@ -92,7 +94,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
               // Account Deletion
               _buildOption("Request Account Deletion", () {
-                controller.requestAccountDeletion();
+                controller.requestAccountDeletion(
+                  context,
+                  widget.iapService,
+                );
               }),
 
               // Rate Us

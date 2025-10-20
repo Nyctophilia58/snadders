@@ -44,6 +44,7 @@ dependencies:
   google_mobile_ads: ^6.0.0
   in_app_purchase: ^3.2.3
   in_app_review: ^2.0.11
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:

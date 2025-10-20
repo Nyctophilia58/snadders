@@ -284,10 +284,10 @@ class _HomePageState extends State<HomePage>
                                       'Settings', Icons.settings, () {
                                     showDialog(
                                       context: context,
-                                      builder: (context) => const Dialog(
+                                      builder: (context) => Dialog(
                                         backgroundColor: Colors.transparent,
-                                        insetPadding: EdgeInsets.all(16),
-                                        child: SettingsPage(),
+                                        insetPadding: const EdgeInsets.all(16),
+                                        child: SettingsPage(iapService: widget.iapService,),
                                       ),
                                     );
                                   }),
