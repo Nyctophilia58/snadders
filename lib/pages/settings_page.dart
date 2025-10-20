@@ -96,8 +96,8 @@ class _SettingsPageState extends State<SettingsPage> {
               }),
 
               // Rate Us
-              _buildOption("Rate Us", () {
-                controller.rateUs();
+              _buildOption("Rate Us", () async {
+                await controller.rateUs(context);
               }),
 
               // Share

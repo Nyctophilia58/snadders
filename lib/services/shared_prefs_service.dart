@@ -8,6 +8,7 @@ class SharedPrefsService {
   static const String _isGuestKey = 'isGuest';
   static const String _profileImageKey = 'profileImage';
   static const String _boardKeyPrefix = 'board_';
+  static const String _ratedKey = 'hasRated';
 
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
@@ -212,5 +213,17 @@ class SharedPrefsService {
       boards.add(await loadBoardUnlocked(i));
     }
     return boards;
+  }
+
+  // Set rated
+  Future<void> setRated(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_ratedKey, value);
+  }
+
+  // Get rated
+  Future<bool?> getRated() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_ratedKey);
   }
 }
