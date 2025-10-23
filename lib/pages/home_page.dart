@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:snadders/pages/coin_selection_page.dart';
 import 'package:snadders/pages/page_controllers/home_page_controller.dart';
 import '../game/board_selection.dart';
 import '../pages/store_page.dart';
@@ -12,6 +13,7 @@ import '../pages/settings_page.dart';
 import '../pages/statistics_page.dart';
 import '../widgets/ad_removal_selection.dart';
 import '../widgets/wheel/wheel.dart';
+import 'online_lobby_page.dart';
 
 class HomePage extends StatefulWidget {
   final IAPService iapService;
@@ -211,17 +213,26 @@ class _HomePageState extends State<HomePage>
                                 spacing: 20,
                                 runSpacing: 20,
                                 children: [
-                                  if (!widget.isGuest)
+                                  if (widget.isGuest)
                                     _buildButton(
                                       'PLAY ONLINE',
                                       Icons.people,
-                                          () {},
+                                      () async {
+                                        final selectedCoins = await showDialog<int>(
+                                          context: context,
+                                          barrierColor: Colors.black38,
+                                          builder: (context) => CoinSelectionPage(
+                                            coins: widget.iapService.coinsNotifier.value ?? 0,
+                                            diamonds: widget.iapService.diamondsNotifier.value ?? 0,
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  if (!widget.isGuest)
+                                  if (widget.isGuest)
                                     _buildButton(
                                       'PLAY WITH FRIENDS',
                                       Icons.people,
-                                          () {},
+                                      () {},
                                     ),
                                   _buildButton(
                                     'VS COMPUTER',

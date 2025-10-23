@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "58775063921",
+    "project_id": "snadders-1ee5e",
+    "storage_bucket": "snadders-1ee5e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:58775063921:android:43a8c33f95cc65d8f83ad0",
+        "android_client_info": {
+          "package_name": "com.nowshin.snadders"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_SVtaR6T9yCBWOVPKUqnReHXZoN6b8Kc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
