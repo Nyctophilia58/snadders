@@ -285,7 +285,7 @@ class LobbyPageState extends State<LobbyPage>
               ),
             ),
             Positioned(
-              bottom: -60,
+              bottom: 20,
               left: 0,
               right: 0,
               child: Center(
