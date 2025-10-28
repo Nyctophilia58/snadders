@@ -24,17 +24,13 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
 
   void _incrementValues() {
     if (currentIndex < LobbyCoinValues.entryFees.length - 1) {
-      setState(() {
-        currentIndex++;
-      });
+      setState(() => currentIndex++);
     }
   }
 
   void _decrementValues() {
     if (currentIndex > 0) {
-      setState(() {
-        currentIndex--;
-      });
+      setState(() => currentIndex--);
     }
   }
 
@@ -44,85 +40,128 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // --- Main Card ---
           Card(
-            color: Colors.greenAccent.withAlpha(250),
-            elevation: 8,
+            color: Colors.transparent,
+            elevation: 10,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(28),
             ),
             child: Container(
-              width: 320,
-              padding: const EdgeInsets.all(20),
+              width: MediaQuery.of(context).size.width * 0.85,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.greenAccent.shade700.withOpacity(0.9),
+                    Colors.greenAccent.withOpacity(0.9),
+                    Colors.pinkAccent.shade200.withOpacity(0.7),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.purpleAccent.withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
                   Text(
                     'SELECT LOBBY',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: Colors.purple.shade800,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
                       decoration: TextDecoration.none,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(1, 2),
+                          blurRadius: 4,
+                        )
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 25),
 
-                  // --- Coins container row ---
+                  // 💰 Coins container row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Minus button
                       if (currentIndex > 0)
                         IconButton(
                           onPressed: _decrementValues,
                           icon: Icon(
-                            Icons.indeterminate_check_box_outlined,
-                            color: Colors.red.shade700,
-                            size: 35,
+                            Icons.remove_circle_outline,
+                            color: Colors.redAccent.shade700,
+                            size: 38,
                           ),
                         )
                       else
                         const SizedBox(width: 48),
 
+                      // 🪙 Central Card
                       Flexible(
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 8),
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.yellow.shade500.withOpacity(0.8),
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.yellow.shade600.withOpacity(0.9),
+                                Colors.orange.shade400.withOpacity(0.8),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
+                                color: Colors.orangeAccent.withOpacity(0.4),
+                                blurRadius: 15,
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
                           child: Column(
                             children: [
                               Icon(
-                                Icons.monetization_on,
-                                color: Colors.deepOrange.shade700,
-                                size: 24,
+                                Icons.monetization_on_rounded,
+                                color: Colors.deepOrange.shade900,
+                                size: 28,
                               ),
-                              const SizedBox(height: 10),
-                              // Diamonds with FittedBox
+                              const SizedBox(height: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 28, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade400.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(8),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.white.withOpacity(0.85),
+                                      Colors.grey.shade300.withOpacity(0.8),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
                                     '$displayedDiamonds',
                                     style: TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w900,
                                       color: Colors.purple.shade900,
                                       decoration: TextDecoration.none,
                                     ),
@@ -130,13 +169,12 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              // Entry fee
                               Text(
                                 'Entry: $displayedCoins',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade900,
+                                  color: Colors.greenAccent.shade100,
                                   decoration: TextDecoration.none,
                                 ),
                               ),
@@ -145,14 +183,13 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                         ),
                       ),
 
-                      // Add button
                       if (currentIndex < LobbyCoinValues.entryFees.length - 1)
                         IconButton(
                           onPressed: _incrementValues,
                           icon: Icon(
-                            Icons.add_box_outlined,
-                            color: Colors.red.shade700,
-                            size: 35,
+                            Icons.add_circle_outline,
+                            color: Colors.green.shade700,
+                            size: 38,
                           ),
                         )
                       else
@@ -160,30 +197,32 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                     ],
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 35),
 
-                  // --- Play button ---
+                  // ▶ Play Button
                   SizedBox(
+                    width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context, displayedCoins);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple.shade600.withOpacity(0.9),
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 30),
+                        backgroundColor: Colors.pinkAccent.shade400,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 30),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        elevation: 6,
-                        shadowColor: Colors.purple,
+                        elevation: 10,
+                        shadowColor: Colors.pinkAccent,
                       ),
                       child: const Text(
                         'PLAY',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          letterSpacing: 1.1,
+                          letterSpacing: 1.2,
                           decoration: TextDecoration.none,
                         ),
                       ),
@@ -194,20 +233,20 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
             ),
           ),
 
-          // --- Coins + Diamonds floating bar ---
           Positioned(
-            top: -30,
+            top: -35,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.monetization_on, color: Colors.yellow),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.monetization_on, color: Colors.yellowAccent),
+                      const SizedBox(width: 6),
                       Text(
                         '${widget.coins}',
                         style: const TextStyle(
@@ -215,21 +254,14 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           decoration: TextDecoration.none,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 2,
-                              offset: Offset(0, 0),
-                              color: Colors.black54,
-                            ),
-                          ],
                         ),
                       ),
                     ],
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.diamond, color: Colors.blue),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.diamond, color: Colors.cyanAccent),
+                      const SizedBox(width: 6),
                       Text(
                         '${widget.diamonds}',
                         style: const TextStyle(
@@ -237,13 +269,6 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           decoration: TextDecoration.none,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 2,
-                              offset: Offset(0, 0),
-                              color: Colors.black54,
-                            ),
-                          ],
                         ),
                       ),
                     ],
@@ -252,19 +277,18 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
               ),
             ),
           ),
+
+          // ❌ Exit Button at Bottom
           Positioned(
             bottom: -60,
             left: 0,
             right: 0,
-            // exit button
             child: Center(
               child: ExitButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                }
-              )
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

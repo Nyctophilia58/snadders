@@ -13,7 +13,7 @@ import '../pages/settings_page.dart';
 import '../pages/statistics_page.dart';
 import '../widgets/ad_removal_selection.dart';
 import '../widgets/wheel/wheel.dart';
-import 'online_lobby_page.dart';
+import 'lobby_page.dart';
 
 class HomePage extends StatefulWidget {
   final IAPService iapService;
@@ -226,6 +226,17 @@ class _HomePageState extends State<HomePage>
                                             diamonds: widget.iapService.diamondsNotifier.value ?? 0,
                                           ),
                                         );
+                                        if (selectedCoins != null) {
+                                          showDialog(
+                                            context: context,
+                                            barrierColor: Colors.black38,
+                                            builder: (context) => LobbyPage(
+                                              username: controller.username,
+                                              stakeCoins: selectedCoins,
+                                              imagePath: controller.profileImagePath,
+                                            ),
+                                          );
+                                        }
                                       },
                                     ),
                                   if (widget.isGuest)
