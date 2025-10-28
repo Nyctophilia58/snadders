@@ -213,38 +213,36 @@ class _HomePageState extends State<HomePage>
                                 spacing: 20,
                                 runSpacing: 20,
                                 children: [
-                                  if (widget.isGuest)
-                                    _buildButton(
-                                      'PLAY ONLINE',
-                                      Icons.people,
-                                      () async {
-                                        final selectedCoins = await showDialog<int>(
+                                  _buildButton(
+                                    'PLAY ONLINE',
+                                    Icons.people,
+                                    () async {
+                                      final selectedCoins = await showDialog<int>(
+                                        context: context,
+                                        barrierColor: Colors.black38,
+                                        builder: (context) => CoinSelectionPage(
+                                          coins: widget.iapService.coinsNotifier.value ?? 0,
+                                          diamonds: widget.iapService.diamondsNotifier.value ?? 0,
+                                        ),
+                                      );
+                                      if (selectedCoins != null) {
+                                        showDialog(
                                           context: context,
                                           barrierColor: Colors.black38,
-                                          builder: (context) => CoinSelectionPage(
-                                            coins: widget.iapService.coinsNotifier.value ?? 0,
-                                            diamonds: widget.iapService.diamondsNotifier.value ?? 0,
+                                          builder: (context) => LobbyPage(
+                                            username: controller.username,
+                                            stakeCoins: selectedCoins,
+                                            imagePath: controller.profileImagePath,
                                           ),
                                         );
-                                        if (selectedCoins != null) {
-                                          showDialog(
-                                            context: context,
-                                            barrierColor: Colors.black38,
-                                            builder: (context) => LobbyPage(
-                                              username: controller.username,
-                                              stakeCoins: selectedCoins,
-                                              imagePath: controller.profileImagePath,
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                  if (widget.isGuest)
-                                    _buildButton(
-                                      'PLAY WITH FRIENDS',
-                                      Icons.people,
-                                      () {},
-                                    ),
+                                      }
+                                    },
+                                  ),
+                                  _buildButton(
+                                    'PLAY WITH FRIENDS',
+                                    Icons.people,
+                                    () {},
+                                  ),
                                   _buildButton(
                                     'VS COMPUTER',
                                     Icons.smart_toy,

@@ -135,7 +135,7 @@ class LobbyPageState extends State<LobbyPage>
                             ),
                           ],
                         ),
-
+                
                         // Real Time Label
                         Container(
                           padding:
@@ -155,9 +155,9 @@ class LobbyPageState extends State<LobbyPage>
                             ),
                           ),
                         ),
-
+                
                         const SizedBox(height: 10),
-
+                
                         Text(
                           'Entry Amount: ${widget.stakeCoins}',
                           style: TextStyle(
@@ -167,7 +167,7 @@ class LobbyPageState extends State<LobbyPage>
                           ),
                         ),
                         const SizedBox(height: 50),
-
+                
                         // Players Row
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -208,9 +208,9 @@ class LobbyPageState extends State<LobbyPage>
                             _buildPlayer('???', 'assets/icons/app_icon.png', Colors.blue),
                           ],
                         ),
-
+                
                         const SizedBox(height: 10),
-
+                
                         // Timer
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -241,9 +241,9 @@ class LobbyPageState extends State<LobbyPage>
                             ],
                           ),
                         ),
-
+                
                         const SizedBox(height: 25),
-
+                
                         // Searching bar
                         Container(
                           padding:
@@ -285,12 +285,14 @@ class LobbyPageState extends State<LobbyPage>
               ),
             ),
             Positioned(
-              bottom: 20,
+              bottom: -60,
               left: 0,
               right: 0,
               child: Center(
-                child: ExitButton(
-                  onPressed: () => Navigator.pop(context),
+                child: Center(
+                  child: ExitButton(
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
               ),
             ),
