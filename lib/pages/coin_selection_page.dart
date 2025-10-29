@@ -57,7 +57,6 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                   colors: [
                     Colors.greenAccent.shade700.withOpacity(0.9),
                     Colors.greenAccent.withOpacity(0.9),
-                    Colors.pinkAccent.shade200.withOpacity(0.7),
                   ],
                 ),
                 boxShadow: [

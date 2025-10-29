@@ -330,7 +330,10 @@ class LobbyPageState extends State<LobbyPage>
         ),
         const SizedBox(height: 10),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          constraints: const BoxConstraints(
+            maxWidth: 100, // limit width to avoid overflow
+          ),
           decoration: BoxDecoration(
             color: Colors.greenAccent,
             borderRadius: BorderRadius.circular(10),
@@ -343,6 +346,9 @@ class LobbyPageState extends State<LobbyPage>
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ),
       ],
