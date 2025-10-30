@@ -98,7 +98,7 @@ class SettingsPageController {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => SignInPage(iapService: iapService),
+            builder: (_) => SignInPage(),
           ),
         );
       }

@@ -6,8 +6,7 @@ import '../widgets/exit_button.dart';
 import '../pages/home_page.dart';
 
 class SignInPage extends StatefulWidget {
-  final IAPService iapService;
-  const SignInPage({super.key, required this.iapService});
+  const SignInPage({super.key});
 
   @override
   State<SignInPage> createState() => _SignInPageState();
@@ -29,7 +28,6 @@ class _SignInPageState extends State<SignInPage> {
         builder: (_) => HomePage(
           username: username,
           isGuest: isGuest,
-          iapService: widget.iapService,
         ),
       ),
     );

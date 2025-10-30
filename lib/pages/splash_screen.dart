@@ -14,7 +14,6 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  final IAPService _iapService = IAPService();
   late final SplashScreenController controller;
 
   @override
@@ -25,8 +24,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initApp() async {
-    await _iapService.initialize();
-
     if (!mounted) return;
 
     // Initialize app safely with mounted check
@@ -49,7 +46,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           builder: (_) => HomePage(
             username: username,
             isGuest: isGuest,
-            iapService: _iapService,
           ),
         ),
       );
@@ -57,7 +53,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => SignInPage(iapService: _iapService),
+          builder: (_) => SignInPage(),
         ),
       );
     }
