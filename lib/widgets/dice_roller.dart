@@ -41,7 +41,9 @@ class _DiceRollerState extends State<DiceRoller> {
 
     setState(() => isRolling = true);
 
-    await _audioPlayer.play(AssetSource('audios/dice-142528.mp3'));
+    try {
+      await _audioPlayer.play(AssetSource('audios/dice-142528.mp3'));
+    } catch (_) {}
 
     const rollDuration = Duration(seconds: 1);
     Timer.periodic(const Duration(milliseconds: 100), (timer) {
