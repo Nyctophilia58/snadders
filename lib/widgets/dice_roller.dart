@@ -72,7 +72,7 @@ class _DiceRollerState extends State<DiceRoller> {
   @override
   void didUpdateWidget(covariant DiceRoller oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.autoRoll && !isRolling) {
+    if (widget.autoRoll && !oldWidget.autoRoll && !isRolling) {
       Future.delayed(widget.delay ?? const Duration(milliseconds: 500), () {
         rollDice();
       });
