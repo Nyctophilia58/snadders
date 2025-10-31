@@ -247,11 +247,21 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   }
 
   void _resetGame() {
-    setState(() {
-      controller.reset();
-      _winnerAnimationController.reset();
-    });
+    // Reset game controller
+    controller.reset();
+    _winnerAnimationController.reset();
+    _isAnimating = false;
+
+    // Reset token animations
+    for (int i = 0; i < _tokenControllers.length; i++) {
+      _tokenControllers[i].reset();
+      _tokenAnimations[i] = AlwaysStoppedAnimation(Offset.zero);
+      _tokenRotations[i] = AlwaysStoppedAnimation(0.0);
+    }
+
+    setState(() {});
   }
+
 
   @override
   Widget build(BuildContext context) {

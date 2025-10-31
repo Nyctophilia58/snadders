@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import '../services/ad_services/ad_banner_service.dart';
 import '../widgets/exit_button.dart';
+import 'data/ladders_data.dart';
+import 'data/snakes_data.dart';
 import 'game_utils.dart';
 
 class PassNPlay extends StatefulWidget {
@@ -17,22 +19,28 @@ class PassNPlay extends StatefulWidget {
   State<PassNPlay> createState() => _PassNPlayState();
 }
 
-class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMixin {
+class _PassNPlayState extends State<PassNPlay> with TickerProviderStateMixin {
   late GameController controller;
   late AnimationController _winnerAnimationController;
   late Animation<double> _winnerAnimation;
 
   final List<Color> playerColors = [Colors.green, Colors.red, Colors.yellow, Colors.blue];
 
+  late List<AnimationController> _tokenControllers;
+  late List<Animation<Offset>> _tokenAnimations;
+  late List<Animation<double>> _tokenRotations;
+
+  bool _isAnimating = false;
+
   @override
   void initState() {
     super.initState();
+
     controller = GameController(
       totalPlayers: widget.selectedPlayers,
       boardNumber: widget.boardIndex + 1,
       playerNames: List.generate(widget.selectedPlayers, (i) => "Player ${i + 1}"),
     );
-
 
     _winnerAnimationController = AnimationController(
       vsync: this,
@@ -42,38 +50,205 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
       CurvedAnimation(parent: _winnerAnimationController, curve: Curves.easeInOut),
     );
 
+    _tokenControllers = List.generate(
+      widget.selectedPlayers,
+          (_) => AnimationController(vsync: this, duration: const Duration(milliseconds: 1000)),
+    );
+    _tokenAnimations = List.generate(widget.selectedPlayers, (_) => AlwaysStoppedAnimation(Offset.zero));
+    _tokenRotations = List.generate(widget.selectedPlayers, (_) => AlwaysStoppedAnimation(0.0));
+
     AdBannerService.loadBannerAd();
   }
 
   @override
   void dispose() {
+    for (var c in _tokenControllers) c.dispose();
     _winnerAnimationController.dispose();
     super.dispose();
   }
 
-  void _handleDiceRoll(int playerIndex, int dice) {
-    if (controller.winner != null || controller.currentPlayerIndex != playerIndex) return;
+  void _handleDiceRoll(int playerIndex, int dice) async {
+    if (_isAnimating || controller.winner != null || controller.currentPlayerIndex != playerIndex) return;
 
-    setState(() {
-      controller.rollDice(playerIndex, dice);
+    _isAnimating = true;
+    int oldPosition = controller.playerPositions[playerIndex];
+    int newPosition = oldPosition + dice;
 
-      if (controller.winner != null) {
-        _winnerAnimationController.forward();
-        GameUtils.showWinnerDialog(
-          context: context,
-          winnerName: controller.winner!,
-          onPlayAgain: _resetGame,
-          allAdsRemoved: widget.allAdsRemoved,
-        );
-      }
+    if (newPosition > 100) {
+      controller.currentPlayerIndex = (playerIndex + 1) % widget.selectedPlayers;
+      _isAnimating = false;
+      setState(() {});
+      return;
+    }
+
+    // Animate each square
+    for (int pos = oldPosition + 1; pos <= newPosition; pos++) {
+      await _animateTokenHop(playerIndex, pos);
+    }
+
+    final ladders = laddersList[controller.boardNumber - 1];
+    final snakes = snakesList[controller.boardNumber - 1];
+
+    if (ladders.containsKey(newPosition)) {
+      int end = ladders[newPosition]!;
+      await _animateLadder(playerIndex, newPosition, end);
+      controller.playerPositions[playerIndex] = end;
+    } else if (snakes.containsKey(newPosition)) {
+      int end = snakes[newPosition]!;
+      await _animateSnake(playerIndex, newPosition, end);
+      controller.playerPositions[playerIndex] = end;
+    } else {
+      controller.playerPositions[playerIndex] = newPosition;
+    }
+
+    // Check winner
+    if (controller.playerPositions[playerIndex] == 100) {
+      controller.winner = controller.playerNames[playerIndex];
+      _winnerAnimationController.forward();
+      GameUtils.showWinnerDialog(
+        context: context,
+        winnerName: controller.winner!,
+        onPlayAgain: _resetGame,
+        allAdsRemoved: widget.allAdsRemoved,
+      );
+    } else {
+      controller.currentPlayerIndex = (playerIndex + 1) % widget.selectedPlayers;
+    }
+
+    _isAnimating = false;
+    setState(() {});
+  }
+
+  Future<void> _animateTokenHop(int index, int targetPosition) async {
+    final animCtrl = _tokenControllers[index];
+
+    final Offset startOffset = _getCellOffset(controller.playerPositions[index]);
+    final Offset endOffset = _getCellOffset(targetPosition);
+
+    animCtrl.addListener(() {
+      double t = animCtrl.value;
+      double hopHeight = 20;
+      double verticalOffset = 4 * hopHeight * t * (t - 1);
+      _tokenAnimations[index] = AlwaysStoppedAnimation(
+        Offset(
+          startOffset.dx + (endOffset.dx - startOffset.dx) * t,
+          startOffset.dy + (endOffset.dy - startOffset.dy) * t + verticalOffset,
+        ),
+      );
+      setState(() {});
     });
+
+    animCtrl.reset();
+    animCtrl.duration = const Duration(milliseconds: 300);
+    await animCtrl.forward();
+    controller.playerPositions[index] = targetPosition;
+    setState(() {});
+  }
+
+  Future<void> _animateLadder(int index, int start, int end) async {
+    final animCtrl = _tokenControllers[index];
+    final Offset startOffset = _getCellOffset(start);
+    final Offset endOffset = _getCellOffset(end);
+
+    animCtrl.addListener(() {
+      double t = animCtrl.value;
+      double hopHeight = 25;
+      double verticalOffset = -4 * hopHeight * t * (t - 1);
+      _tokenAnimations[index] = AlwaysStoppedAnimation(
+        Offset(
+          startOffset.dx + (endOffset.dx - startOffset.dx) * t,
+          startOffset.dy + (endOffset.dy - startOffset.dy) * t + verticalOffset,
+        ),
+      );
+      setState(() {});
+    });
+
+    animCtrl.reset();
+    animCtrl.duration = const Duration(milliseconds: 700);
+    await animCtrl.forward();
+    controller.playerPositions[index] = end;
+    setState(() {});
+  }
+
+  Future<void> _animateSnake(int index, int start, int end, {int maxSpins = 6}) async {
+    final animCtrl = _tokenControllers[index];
+    final rotationCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    final Offset startOffset = _getCellOffset(start);
+    final Offset endOffset = _getCellOffset(end);
+
+    int distance = (start - end).abs();
+    int spins = ((distance / 10) * maxSpins).clamp(1, maxSpins).toInt();
+
+    animCtrl.addListener(() {
+      double t = animCtrl.value;
+      double hopHeight = 10;
+      double verticalOffset = -4 * hopHeight * t * (t - 1);
+      _tokenAnimations[index] = AlwaysStoppedAnimation(
+        Offset(
+          startOffset.dx + (endOffset.dx - startOffset.dx) * t,
+          startOffset.dy + (endOffset.dy - startOffset.dy) * t + verticalOffset,
+        ),
+      );
+      setState(() {});
+    });
+
+    _tokenRotations[index] = Tween<double>(begin: 0, end: spins * 2 * pi).animate(
+      CurvedAnimation(parent: rotationCtrl, curve: Curves.linear),
+    );
+
+    animCtrl.reset();
+    rotationCtrl.reset();
+    animCtrl.duration = const Duration(milliseconds: 900);
+    rotationCtrl.duration = const Duration(milliseconds: 900);
+
+    await Future.wait([animCtrl.forward(), rotationCtrl.forward()]);
+    controller.playerPositions[index] = end;
+    rotationCtrl.dispose();
+    setState(() {});
+  }
+
+  Offset _getCellOffset(int position) {
+    const boardPadding = 2.0;
+    final constraints = MediaQuery.of(context).size;
+    const imageAspect = 360.0 / 500.0;
+    double containerWidth = constraints.width - 2 * boardPadding;
+    double containerHeight = constraints.height;
+    double containerAspect = containerWidth / containerHeight;
+
+    double renderedWidth, renderedHeight;
+    if (containerAspect > imageAspect) {
+      renderedHeight = containerHeight;
+      renderedWidth = containerHeight * imageAspect;
+    } else {
+      renderedWidth = containerWidth;
+      renderedHeight = containerWidth / imageAspect;
+    }
+
+    double cellWidth = renderedWidth / 10;
+    double cellHeight = renderedHeight / 10;
+
+    return GameUtils.getPositionOffset(position, cellWidth, cellHeight, boardPadding);
   }
 
   void _resetGame() {
-    setState(() {
-      controller.reset();
-      _winnerAnimationController.reset();
-    });
+    // Reset game controller
+    controller.reset();
+    _winnerAnimationController.reset();
+    _isAnimating = false;
+
+    // Reset token animations
+    for (int i = 0; i < _tokenControllers.length; i++) {
+      _tokenControllers[i].reset();
+      _tokenAnimations[i] = AlwaysStoppedAnimation(Offset.zero);
+      _tokenRotations[i] = AlwaysStoppedAnimation(0.0);
+    }
+
+    // Trigger rebuild so tokens jump back to start
+    setState(() {});
   }
 
   @override
@@ -129,15 +304,26 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                         fit: BoxFit.contain,
                       ),
                       ...List.generate(widget.selectedPlayers, (index) {
-                        Offset offset = GameUtils.getPositionOffset(controller.playerPositions[index], cellWidth, cellHeight, boardPadding);
-                        return Positioned(
-                          left: offset.dx - tokenSize / 2 - xOffset,
-                          top: yOffset + offset.dy - tokenSize / 2,
-                          child: Icon(
-                            Icons.location_on,
-                            color: playerColors[index],
-                            size: tokenSize,
-                          ),
+                        return AnimatedBuilder(
+                          animation: _tokenControllers[index],
+                          builder: (context, child) {
+                            Offset base = _getCellOffset(controller.playerPositions[index]);
+                            Offset animated = _tokenAnimations[index].value;
+                            double rotation = _tokenRotations[index].value;
+                            Offset finalPos = animated == Offset.zero ? base : animated;
+                            return Positioned(
+                              left: finalPos.dx - tokenSize / 2 - xOffset,
+                              top: yOffset + finalPos.dy - tokenSize / 2,
+                              child: Transform.rotate(
+                                angle: rotation,
+                                child: Icon(
+                                  Icons.location_on,
+                                  color: playerColors[index],
+                                  size: tokenSize,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       }),
                     ],
@@ -145,42 +331,8 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
                 },
               ),
 
-              // Player info
-              Positioned(bottom: 80, left: 20, child: GameUtils.buildPlayerInfo(
-                playerIndex: 0,
-                label: "Player 1",
-                color: playerColors[0],
-                currentPlayerIndex: controller.currentPlayerIndex,
-                autoRollDice: false,
-                onRolled: _handleDiceRoll,
-              )),
-              if (widget.selectedPlayers >= 2)
-                Positioned(bottom: 80, right: 20, child: GameUtils.buildPlayerInfo(
-                  playerIndex: 1,
-                  label: "Player 2",
-                  color: playerColors[1],
-                  currentPlayerIndex: controller.currentPlayerIndex,
-                  autoRollDice: false,
-                  onRolled: _handleDiceRoll,
-                )),
-              if (widget.selectedPlayers >= 3)
-                Positioned(top: 70, right: 20, child: GameUtils.buildPlayerInfo(
-                  playerIndex: 2,
-                  label: "Player 3",
-                  color: playerColors[2],
-                  currentPlayerIndex: controller.currentPlayerIndex,
-                  autoRollDice: false,
-                  onRolled: _handleDiceRoll,
-                )),
-              if (widget.selectedPlayers >= 4)
-                Positioned(top: 70, left: 20, child: GameUtils.buildPlayerInfo(
-                  playerIndex: 3,
-                  label: "Player 4",
-                  color: playerColors[3],
-                  currentPlayerIndex: controller.currentPlayerIndex,
-                  autoRollDice: false,
-                  onRolled: _handleDiceRoll,
-                )),
+              // Player info widgets
+              ..._buildPlayerInfoWidgets(),
 
               // Exit button
               Positioned(
@@ -218,5 +370,66 @@ class _PassNPlayState extends State<PassNPlay> with SingleTickerProviderStateMix
         ),
       ),
     );
+  }
+
+  List<Widget> _buildPlayerInfoWidgets() {
+    List<Widget> widgets = [];
+    if (widget.selectedPlayers >= 1) {
+      widgets.add(Positioned(
+        bottom: 80,
+        left: 20,
+        child: GameUtils.buildPlayerInfo(
+          playerIndex: 0,
+          label: "Player 1",
+          color: playerColors[0],
+          currentPlayerIndex: controller.currentPlayerIndex,
+          autoRollDice: false,
+          onRolled: _handleDiceRoll,
+        ),
+      ));
+    }
+    if (widget.selectedPlayers >= 2) {
+      widgets.add(Positioned(
+        bottom: 80,
+        right: 20,
+        child: GameUtils.buildPlayerInfo(
+          playerIndex: 1,
+          label: "Player 2",
+          color: playerColors[1],
+          currentPlayerIndex: controller.currentPlayerIndex,
+          autoRollDice: false,
+          onRolled: _handleDiceRoll,
+        ),
+      ));
+    }
+    if (widget.selectedPlayers >= 3) {
+      widgets.add(Positioned(
+        top: 70,
+        right: 20,
+        child: GameUtils.buildPlayerInfo(
+          playerIndex: 2,
+          label: "Player 3",
+          color: playerColors[2],
+          currentPlayerIndex: controller.currentPlayerIndex,
+          autoRollDice: false,
+          onRolled: _handleDiceRoll,
+        ),
+      ));
+    }
+    if (widget.selectedPlayers >= 4) {
+      widgets.add(Positioned(
+        top: 70,
+        left: 20,
+        child: GameUtils.buildPlayerInfo(
+          playerIndex: 3,
+          label: "Player 4",
+          color: playerColors[3],
+          currentPlayerIndex: controller.currentPlayerIndex,
+          autoRollDice: false,
+          onRolled: _handleDiceRoll,
+        ),
+      ));
+    }
+    return widgets;
   }
 }
