@@ -37,7 +37,7 @@ Future<int?> showPlayerSelectionDialog(BuildContext context) {
                   ),
                 ),
                 subtitle: const Text(
-                  'One vs Computer',
+                  'One vs One',
                   style: TextStyle(color: Colors.black54),
                 ),
                 onTap: () {
