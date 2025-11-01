@@ -4,6 +4,8 @@ import '../services/ad_services/ad_banner_service.dart';
 import '../services/ad_services/ad_interstitial_service.dart';
 import 'data/ladders_data.dart';
 import 'data/snakes_data.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:lottie/lottie.dart';
 
 typedef DiceRollCallback = void Function(int playerIndex, int dice);
 
@@ -125,67 +127,96 @@ class GameUtils {
     required VoidCallback onPlayAgain,
     required bool allAdsRemoved,
   }) {
+    final AudioPlayer audioPlayer = AudioPlayer();
+    audioPlayer.play(AssetSource('audios/success-48729.mp3'));
+
     showModalBottomSheet(
       context: context,
       isDismissible: false,
       enableDrag: false,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "$winnerName wins!",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                  fontFamily: 'Poppins',
+        return Stack(
+          children: [
+            // Full-screen Lottie animation
+            Lottie.asset(
+              'assets/animations/confetti.json',
+              height: 700,
+              width: 400,
+              fit: BoxFit.cover,
+              repeat: false,
+            ),
+            // Dialog content at the bottom with white background
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "$winnerName wins!",
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (!allAdsRemoved && AdBannerService.getBannerWidget() != null)
+                        AdBannerService.getBannerWidget()!,
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: const Icon(Icons.refresh, color: Colors.white),
+                            label: const Text("Play Again", style: TextStyle(color: Colors.white)),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              audioPlayer.stop();
+                              onPlayAgain();
+                            },
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: const Icon(Icons.exit_to_app, color: Colors.white),
+                            label: const Text("Exit", style: TextStyle(color: Colors.white)),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.pop(context);
+                              audioPlayer.stop();
+                              if (!allAdsRemoved) {
+                                AdInterstitialService.showInterstitialAd();
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-              if (!allAdsRemoved && AdBannerService.getBannerWidget() != null)
-                AdBannerService.getBannerWidget()!,
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                    label: const Text("Play Again", style: TextStyle(color: Colors.white)),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onPlayAgain();
-                    },
-                  ),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.exit_to_app, color: Colors.white),
-                    label: const Text("Exit", style: TextStyle(color: Colors.white)),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                      if (!allAdsRemoved) {
-                        AdInterstitialService.showInterstitialAd();
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );

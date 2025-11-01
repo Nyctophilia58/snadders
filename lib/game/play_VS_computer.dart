@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
@@ -23,6 +24,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   late GameController controller;
   late AnimationController _winnerAnimationController;
   late Animation<double> _winnerAnimation;
+  late final AudioPlayer _audioPlayer;
 
   // Animation controllers for each token
   late List<AnimationController> _tokenControllers;
@@ -33,6 +35,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   @override
   void initState() {
     super.initState();
+    _audioPlayer = AudioPlayer();
     controller = GameController(
       totalPlayers: 2,
       boardNumber: widget.boardIndex + 1,
@@ -59,8 +62,11 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
 
   @override
   void dispose() {
-    for (var c in _tokenControllers) c.dispose();
+    for (var c in _tokenControllers) {
+      c.dispose();
+    }
     _winnerAnimationController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -118,8 +124,8 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   }
 
   Future<void> _animateTokenHop(int index, int targetPosition) async {
+    await _audioPlayer.play(AssetSource('audios/jump-6293.mp3'));
     final animCtrl = _tokenControllers[index];
-
     final Offset startOffset = _getCellOffset(controller.playerPositions[index]);
     final Offset endOffset = _getCellOffset(targetPosition);
 
@@ -153,6 +159,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   }
 
   Future<void> _animateLadder(int index, int start, int end) async {
+    await _audioPlayer.play(AssetSource('audios/climb-5169.mp3'));
     final animCtrl = _tokenControllers[index];
     final Offset startOffset = _getCellOffset(start);
     final Offset endOffset = _getCellOffset(end);
@@ -179,6 +186,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   }
 
   Future<void> _animateSnake(int index, int start, int end, {int maxSpins = 6}) async {
+    await _audioPlayer.play(AssetSource('audios/hiss-3724.mp3'));
     final animCtrl = _tokenControllers[index];
     final rotationCtrl = AnimationController(
       vsync: this,
