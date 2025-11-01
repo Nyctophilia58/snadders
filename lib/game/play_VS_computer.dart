@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lottie/lottie.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import 'package:snadders/services/ad_services/ad_banner_service.dart';
 import '../widgets/exit_button.dart';
@@ -26,10 +27,14 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   late Animation<double> _winnerAnimation;
   late final AudioPlayer _audioPlayer;
 
+  final List<Color> playerColors = [Colors.green, Colors.red];
+  final List<String> colorNames = ['green', 'red'];
+
   // Animation controllers for each token
   late List<AnimationController> _tokenControllers;
   late List<Animation<Offset>> _tokenAnimations;
   late List<Animation<double>> _tokenRotations;
+  late List<AnimationController> _tokenIdleControllers;
   bool _isAnimating = false;
 
   @override
@@ -57,12 +62,24 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
     _tokenAnimations = List.generate(2, (_) => AlwaysStoppedAnimation(Offset.zero));
     _tokenRotations = List.generate(2, (_) => AlwaysStoppedAnimation(0.0));
 
+    // Idle animation controllers for subtle 3D bob
+    _tokenIdleControllers = List.generate(
+      2,
+          (_) => AnimationController(vsync: this, duration: const Duration(seconds: 2)),
+    );
+    for (var ctrl in _tokenIdleControllers) {
+      ctrl.repeat(reverse: true);
+    }
+
     AdBannerService.loadBannerAd();
   }
 
   @override
   void dispose() {
     for (var c in _tokenControllers) {
+      c.dispose();
+    }
+    for (var c in _tokenIdleControllers) {
       c.dispose();
     }
     _winnerAnimationController.dispose();
@@ -128,32 +145,25 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
     final animCtrl = _tokenControllers[index];
     final Offset startOffset = _getCellOffset(controller.playerPositions[index]);
     final Offset endOffset = _getCellOffset(targetPosition);
+    final double hopHeight = 20.0;
 
-    _tokenAnimations[index] = Tween<Offset>(
-      begin: startOffset,
-      end: endOffset,
-    ).animate(CurvedAnimation(parent: animCtrl, curve: Curves.linear));
+    void listener() {
+      final double t = animCtrl.value;
+      final double verticalOffset = 4 * hopHeight * t * (t - 1);
+      final Offset delta = Offset(
+        (endOffset.dx - startOffset.dx) * t,
+        (endOffset.dy - startOffset.dy) * t + verticalOffset,
+      );
+      _tokenAnimations[index] = AlwaysStoppedAnimation(delta);
+      setState(() {});
+    }
 
-    // Add a parabolic hop effect via listener
-    animCtrl.addListener(() {
-      setState(() {
-        double t = animCtrl.value; // 0 -> 1
-        double hopHeight = 20; // pixels to jump up
-        double verticalOffset = 4 * hopHeight * t * (t - 1);
-        _tokenAnimations[index] = AlwaysStoppedAnimation(
-          Offset(
-            startOffset.dx + (endOffset.dx - startOffset.dx) * t,
-            startOffset.dy + (endOffset.dy - startOffset.dy) * t + verticalOffset,
-          ),
-        );
-      });
-    });
-
+    animCtrl.addListener(listener);
     animCtrl.reset();
     animCtrl.duration = const Duration(milliseconds: 300);
     await animCtrl.forward();
-
-    // Update final position in game controller
+    animCtrl.removeListener(listener);
+    _tokenAnimations[index] = AlwaysStoppedAnimation(Offset.zero);
     controller.playerPositions[index] = targetPosition;
     setState(() {});
   }
@@ -163,24 +173,25 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
     final animCtrl = _tokenControllers[index];
     final Offset startOffset = _getCellOffset(start);
     final Offset endOffset = _getCellOffset(end);
+    final double hopHeight = 25.0;
 
-    animCtrl.addListener(() {
-      setState(() {
-        double t = animCtrl.value;
-        double hopHeight = 25;
-        double verticalOffset = -4 * hopHeight * t * (t - 1);
-        _tokenAnimations[index] = AlwaysStoppedAnimation(
-          Offset(
-            startOffset.dx + (endOffset.dx - startOffset.dx) * t,
-            startOffset.dy + (endOffset.dy - startOffset.dy) * t + verticalOffset,
-          ),
-        );
-      });
-    });
+    void listener() {
+      final double t = animCtrl.value;
+      final double verticalOffset = 4 * hopHeight * t * (t - 1); // Fixed: arc upwards like hop
+      final Offset delta = Offset(
+        (endOffset.dx - startOffset.dx) * t,
+        (endOffset.dy - startOffset.dy) * t + verticalOffset,
+      );
+      _tokenAnimations[index] = AlwaysStoppedAnimation(delta);
+      setState(() {});
+    }
 
+    animCtrl.addListener(listener);
     animCtrl.reset();
     animCtrl.duration = const Duration(milliseconds: 700);
     await animCtrl.forward();
+    animCtrl.removeListener(listener);
+    _tokenAnimations[index] = AlwaysStoppedAnimation(Offset.zero);
     controller.playerPositions[index] = end;
     setState(() {});
   }
@@ -195,26 +206,24 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
 
     final Offset startOffset = _getCellOffset(start);
     final Offset endOffset = _getCellOffset(end);
+    final double hopHeight = 10.0;
 
-    int distance = (start - end).abs(); // number of squares snake covers
+    int distance = (start - end).abs();
     int spins = ((distance / 10) * maxSpins).clamp(1, maxSpins).toInt();
 
-    // Horizontal + vertical slide
-    animCtrl.addListener(() {
-      setState(() {
-        double t = animCtrl.value;
-        double hopHeight = 10; // subtle arc
-        double verticalOffset = -4 * hopHeight * t * (t - 1);
-        _tokenAnimations[index] = AlwaysStoppedAnimation(
-          Offset(
-            startOffset.dx + (endOffset.dx - startOffset.dx) * t,
-            startOffset.dy + (endOffset.dy - startOffset.dy) * t + verticalOffset,
-          ),
-        );
-      });
-    });
+    void positionListener() {
+      final double t = animCtrl.value;
+      final double verticalOffset = -4 * hopHeight * t * (t - 1);
+      final Offset delta = Offset(
+        (endOffset.dx - startOffset.dx) * t,
+        (endOffset.dy - startOffset.dy) * t + verticalOffset,
+      );
+      _tokenAnimations[index] = AlwaysStoppedAnimation(delta);
+      setState(() {});
+    }
 
-    // Rotation based on distance
+    animCtrl.addListener(positionListener);
+
     _tokenRotations[index] = Tween<double>(begin: 0, end: spins * 2 * pi).animate(
       CurvedAnimation(parent: rotationCtrl, curve: Curves.linear),
     );
@@ -225,9 +234,11 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
     rotationCtrl.duration = const Duration(milliseconds: 900);
 
     await Future.wait([animCtrl.forward(), rotationCtrl.forward()]);
-
-    controller.playerPositions[index] = end;
+    animCtrl.removeListener(positionListener);
+    _tokenAnimations[index] = AlwaysStoppedAnimation(Offset.zero);
+    _tokenRotations[index] = AlwaysStoppedAnimation(0.0);
     rotationCtrl.dispose();
+    controller.playerPositions[index] = end;
     setState(() {});
   }
 
@@ -265,11 +276,11 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
       _tokenControllers[i].reset();
       _tokenAnimations[i] = AlwaysStoppedAnimation(Offset.zero);
       _tokenRotations[i] = AlwaysStoppedAnimation(0.0);
+      _tokenIdleControllers[i].forward(); // Restart idle bob
     }
 
     setState(() {});
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +324,17 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
 
                   double cellWidth = renderedWidth / 10;
                   double cellHeight = renderedHeight / 10;
-                  double tokenSize = min(cellWidth, cellHeight) * 0.8;
+                  double tokenSize = min(cellWidth, cellHeight) * 0.9; // Increased base size
+
+                  // Compute player grouping by position for clustering
+                  Map<int, List<int>> positionToPlayers = {};
+                  for (int i = 0; i < 2; i++) {
+                    int pos = controller.playerPositions[i];
+                    positionToPlayers.putIfAbsent(pos, () => <int>[]).add(i);
+                  }
+                  for (var players in positionToPlayers.values) {
+                    players.sort(); // Consistent ordering by player index
+                  }
 
                   return Stack(
                     children: [
@@ -325,29 +346,68 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
                       ),
                       ...List.generate(2, (index) {
                         return AnimatedBuilder(
-                          animation: _tokenControllers[index],
+                          animation: Listenable.merge([
+                            _tokenControllers[index],
+                            _tokenRotations[index],
+                            _tokenIdleControllers[index],
+                          ]),
                           builder: (context, child) {
-                            Offset base = GameUtils.getPositionOffset(
-                              controller.playerPositions[index],
-                              cellWidth,
-                              cellHeight,
-                              boardPadding,
-                            );
-                            Offset animated = _tokenAnimations[index].value;
-                            double rotation = _tokenRotations[index].value;
+                            int pos = controller.playerPositions[index];
+                            List<int> playersAtPos = positionToPlayers[pos]!;
+                            int playerCount = playersAtPos.length;
+                            int myIndexInGroup = playersAtPos.indexOf(index);
 
-                            Offset finalPos = animated == Offset.zero ? base : animated;
-                            Color tokenColor = index == 0 ? Colors.green : Colors.red;
+                            Offset base = _getCellOffset(pos);
+                            Offset withinCellOffset = Offset.zero;
+                            double offsetAmount = min(cellWidth, cellHeight) * 0.35; // Increased for more separation
+
+                            double adjustedTokenSize = tokenSize;
+                            if (playerCount > 1) {
+                              adjustedTokenSize = tokenSize * (0.8 / sqrt(playerCount)); // Less aggressive scaling down
+                            }
+
+                            if (playerCount > 1) {
+                              List<Offset> clusterPositions = [
+                                const Offset(-0.5, -0.5),
+                                const Offset(0.5, -0.5),
+                                const Offset(0.5, 0.5),
+                                const Offset(-0.5, 0.5),
+                              ];
+                              if (myIndexInGroup < clusterPositions.length) {
+                                withinCellOffset = clusterPositions[myIndexInGroup] * offsetAmount;
+                              } else {
+                                // For >4 (unlikely), stack further
+                                withinCellOffset = Offset(0, (myIndexInGroup - 3) * offsetAmount * 2);
+                              }
+                            }
+
+                            Offset animatedDelta = _tokenAnimations[index].value;
+                            double rotation = _tokenRotations[index].value;
+                            double idleScale = 0.95 + (_tokenIdleControllers[index].value * 0.1); // Subtle bob scale for 3D feel
+                            Offset finalPos = base + withinCellOffset + animatedDelta;
+
+                            String animationPath = 'assets/animations/tokens/${colorNames[index]}_token.json';
 
                             return Positioned(
-                              left: finalPos.dx - tokenSize / 2 - xOffset,
-                              top: yOffset + finalPos.dy - tokenSize / 2,
-                              child: Transform.rotate(
-                                angle: rotation,
-                                child: Icon(
-                                  Icons.location_on,
-                                  color: tokenColor,
-                                  size: tokenSize * 1.2,
+                              left: finalPos.dx - adjustedTokenSize / 2 - xOffset,
+                              top: yOffset + finalPos.dy - adjustedTokenSize / 2,
+                              child: Transform.scale(
+                                scale: idleScale,
+                                child: Transform.rotate(
+                                  angle: rotation,
+                                  child: Lottie.asset(
+                                    animationPath,
+                                    width: adjustedTokenSize,
+                                    height: adjustedTokenSize,
+                                    repeat: true,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.location_on,
+                                        color: playerColors[index],
+                                        size: adjustedTokenSize,
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                             );
