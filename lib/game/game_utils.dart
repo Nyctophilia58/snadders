@@ -79,7 +79,7 @@ class GameUtils {
       child: DiceRoller(
         onRolled: (dice) => onRolled(playerIndex, dice),
         autoRoll: isComputer && isCurrent,
-        delay: const Duration(seconds: 1),
+        delay: const Duration(milliseconds: 500),
       ),
     );
 
