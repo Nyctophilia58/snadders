@@ -63,6 +63,43 @@ void main() {
       expect(positions[0], 100);
       expect(winner, "Player 1");
     });
+
+    test('Player climbs ladder correctly', () {
+      List<int> positions = [6];
+      int currentPlayer = 0;
+      String? winner;
+
+      // Suppose board 1 has ladder from 2 -> 12
+      GameUtils.handleDiceRoll(
+        playerIndex: 0,
+        playerPositions: positions,
+        dice: 1, // lands on 2
+        totalPlayers: 1,
+        boardIndex: 1,
+        updateCurrentPlayer: (newIndex) => currentPlayer = newIndex,
+        onWinner: (winnerName) => winner = winnerName,
+      );
+
+      expect(positions[0], 7); // ladder climbed
+    });
+
+    test('Player slides down snake correctly', () {
+      List<int> positions = [13]; // lands on snake head
+      int currentPlayer = 0;
+      String? winner;
+
+      GameUtils.handleDiceRoll(
+        playerIndex: 0,
+        playerPositions: positions,
+        dice: 0,
+        totalPlayers: 1,
+        boardIndex: 1,
+        updateCurrentPlayer: (newIndex) => currentPlayer = newIndex,
+        onWinner: (winnerName) => winner = winnerName,
+      );
+
+      expect(positions[0], 4); // snake slides down
+    });
   });
 
   group('GameUtils.getPositionOffset', () {
