@@ -51,6 +51,7 @@ class SignInPageController {
           rewardedAdsRemoved: data['rewardedAdsRemoved'],
           boardsUnlocked: List<int>.from(data['boardsUnlocked']),
           hasRated: data['hasRated'],
+          profileImage: data['profileImage'],
         );
         return username;
       }
@@ -63,6 +64,7 @@ class SignInPageController {
     final defaultCoins = 500;
     final defaultDiamonds = 25;
     final defaultBoards = [0, 1, 2];
+    final defaultProfileImage = 'assets/images/persons/01.png';
 
     final docRef = await _firestore.collection('googleUsers').add({
       'username': username,
@@ -73,6 +75,7 @@ class SignInPageController {
       'rewardedAdsRemoved': false,
       'boardsUnlocked': defaultBoards,
       'hasRated': false,
+      'profileImage': defaultProfileImage,
     });
 
     final docId = docRef.id;
@@ -87,6 +90,7 @@ class SignInPageController {
       rewardedAdsRemoved: false,
       boardsUnlocked: defaultBoards,
       hasRated: false,
+      profileImage: defaultProfileImage,
     );
 
     return username;
@@ -103,6 +107,7 @@ class SignInPageController {
     final defaultCoins = 500;
     final defaultDiamonds = 25;
     final defaultBoards = [0, 1, 2];
+    final defaultProfileImage = 'assets/images/persons/01.png';
 
     // Save to Firestore
     final docRef = await _firestore.collection('guestUsers').add({
@@ -114,6 +119,7 @@ class SignInPageController {
       'rewardedAdsRemoved': false,
       'boardsUnlocked': defaultBoards,
       'hasRated': false,
+      'profileImage': defaultProfileImage,
     });
 
     final docId = docRef.id;
@@ -129,6 +135,7 @@ class SignInPageController {
       rewardedAdsRemoved: false,
       boardsUnlocked: defaultBoards,
       hasRated: false,
+      profileImage: defaultProfileImage,
     );
 
     return username;
@@ -145,6 +152,7 @@ class SignInPageController {
     required bool rewardedAdsRemoved,
     required List<int> boardsUnlocked,
     required bool hasRated,
+    required String profileImage,
   }) async {
     await _prefsService.saveUserId(docId);
     await _prefsService.saveUsername(username, isGuest: isGuest);
@@ -153,6 +161,7 @@ class SignInPageController {
     await _prefsService.setAllAdsRemoved(allAdsRemoved);
     await _prefsService.setRewardedAdsRemoved(rewardedAdsRemoved);
     await _prefsService.setRated(hasRated);
+    await _prefsService.saveProfileImage(profileImage);
 
     for (int i = 0; i < boardsUnlocked.length; i++) {
       bool unlocked = boardsUnlocked.contains(i);
