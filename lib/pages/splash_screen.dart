@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import 'package:snadders/pages/page_controllers/splash_screen_controller.dart';
-import 'package:snadders/services/iap_services.dart';
 import 'home_page.dart';
 import 'sign_in_page.dart';
 
