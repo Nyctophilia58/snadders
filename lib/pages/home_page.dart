@@ -241,8 +241,10 @@ class _HomePageState extends State<HomePage>
           spacing: 20,
           runSpacing: 20,
           children: [
-            _buildButton('PLAY ONLINE', Icons.people, _onPlayOnline),
-            _buildButton('PLAY WITH FRIENDS', Icons.people, () {}),
+            if (!widget.isGuest)
+              _buildButton('PLAY ONLINE', Icons.people, _onPlayOnline),
+            if (!widget.isGuest)
+              _buildButton('PLAY WITH FRIENDS', Icons.people, () {}),
             _buildButton('VS COMPUTER', Icons.smart_toy, _onPlayVsComputer),
             _buildButton('PASS N PLAY', Icons.group, _onPassNPlay),
           ],
