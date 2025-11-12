@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/board_constants.dart';
 
 class SharedPrefsService {
   static const String _coinsKey = 'coins';
@@ -9,11 +11,34 @@ class SharedPrefsService {
   static const String _profileImageKey = 'profileImage';
   static const String _boardKeyPrefix = 'board_';
   static const String _ratedKey = 'hasRated';
-
+  static const String _allAdsRemovedKey = 'isAllAdsRemoved';
+  static const String _rewardedAdsRemovedKey = 'isRewardedAdsRemoved';
+  static const String _userIdKey = 'userId';
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
   static const int defaultCoins = 500;
   static const int defaultDiamonds = 25;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Helper — update Firestore for both Google and Guest users
+  Future<void> _updateFirestoreField(String field, dynamic value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString(_userIdKey);
+      final isGuest = prefs.getBool(_isGuestKey) ?? true;
+
+      if (userId == null) return;
+
+      final collectionName = isGuest ? 'guestUsers' : 'googleUsers';
+
+      await _firestore.collection(collectionName).doc(userId).update({
+        field: value,
+      });
+    } catch (e) {
+      print('Firestore sync error for $field: $e');
+    }
+  }
 
   // Load coins
   Future<int> loadCoins() async {
@@ -30,6 +55,7 @@ class SharedPrefsService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_coinsKey, coins);
+      await _updateFirestoreField('coins', coins);
     } catch (e) {
       print('Error saving coins: $e');
     }
@@ -50,6 +76,7 @@ class SharedPrefsService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_diamondsKey, diamonds);
+      await _updateFirestoreField('diamonds', diamonds);
     } catch (e) {
       print('Error saving diamonds: $e');
     }
@@ -98,6 +125,8 @@ class SharedPrefsService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_usernameKey, username);
       await prefs.setBool(_isGuestKey, isGuest);
+      await _updateFirestoreField('username', username);
+      await _updateFirestoreField('isGuest', isGuest);
     } catch (e) {
       print('Error saving username: $e');
     }
@@ -139,6 +168,7 @@ class SharedPrefsService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_profileImageKey, imagePath);
+      await _updateFirestoreField('profileImage', imagePath);
     } catch (e) {
       print('Error saving profile image: $e');
     }
@@ -161,7 +191,7 @@ class SharedPrefsService {
   Future<bool> loadAllAdsRemoved() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool('isAllAdsRemoved') ?? false;
+      return prefs.getBool(_allAdsRemovedKey) ?? false;
     } catch (e) {
       return false;
     }
@@ -170,7 +200,7 @@ class SharedPrefsService {
   Future<bool> loadRewardedAdsRemoved() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool('isRewardedAdsRemoved') ?? false;
+      return prefs.getBool(_rewardedAdsRemovedKey) ?? false;
     } catch (e) {
       return false;
     }
@@ -178,12 +208,14 @@ class SharedPrefsService {
 
   Future<void> setAllAdsRemoved(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isAllAdsRemoved', value);
+    await prefs.setBool(_allAdsRemovedKey, value);
+    await _updateFirestoreField('allAdsRemoved', value);
   }
 
   Future<void> setRewardedAdsRemoved(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isRewardedAdsRemoved', value);
+    await prefs.setBool(_rewardedAdsRemovedKey, value);
+    await _updateFirestoreField('rewardedAdsRemoved', value);
   }
 
   // Save if a board is unlocked
@@ -191,6 +223,12 @@ class SharedPrefsService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('$_boardKeyPrefix$boardIndex', unlocked);
+      
+      final unlockedBoards = [
+        for (int i = 0; i < boardImages.length; i++)
+          if (prefs.getBool('$_boardKeyPrefix$i') ?? false) i
+      ];
+      await _updateFirestoreField('boardsUnlocked', unlockedBoards);
     } catch (e) {
       print('Error saving board $boardIndex: $e');
     }
@@ -219,11 +257,31 @@ class SharedPrefsService {
   Future<void> setRated(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_ratedKey, value);
+    await _updateFirestoreField('hasRated', value);
   }
 
   // Get rated
   Future<bool?> getRated() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_ratedKey);
+  }
+
+  Future<void> saveUserId(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userIdKey, userId);
+    } catch (e) {
+      print('Error saving userId: $e');
+    }
+  }
+
+  // Load Firestore docId (userId) from SharedPreferences
+  Future<String?> loadUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_userIdKey);
+    } catch (e) {
+      return null;
+    }
   }
 }
