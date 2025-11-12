@@ -166,7 +166,16 @@ class _SignInPageState extends State<SignInPage> {
                                             ElevatedButton(
                                               onPressed: () async {
                                                 if (playerName.isNotEmpty) {
-                                                  await controller.playAsGuest(playerName);
+                                                  final result = await controller.playAsGuest(playerName);
+                                                  if (result == null) {
+                                                    // Show error for duplicate username
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text("Username already taken. Please choose another."),
+                                                      ),
+                                                    );
+                                                    return;
+                                                  }
                                                   Navigator.pop(context);
                                                   await _navigateToHome(playerName, true);
                                                 }
