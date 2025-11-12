@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
-import 'package:audioplayers/audioplayers.dart';
+
+import 'audio_manager.dart';
 
 final randomizer = Random();
 
@@ -22,7 +23,6 @@ class DiceRoller extends StatefulWidget {
 }
 
 class _DiceRollerState extends State<DiceRoller> {
-  final _audioPlayer = AudioPlayer();
   int diceNum = 1;
   bool isRolling = false;
 
@@ -42,7 +42,7 @@ class _DiceRollerState extends State<DiceRoller> {
     setState(() => isRolling = true);
 
     try {
-      await _audioPlayer.play(AssetSource('audios/dice-142528.mp3'));
+      await AudioManager.instance.playSFX('audios/dice-142528.mp3');
     } catch (_) {}
 
     const rollDuration = Duration(seconds: 1);

@@ -284,4 +284,17 @@ class SharedPrefsService {
       return null;
     }
   }
+
+  // Save sound Enabled
+  Future<void> saveSoundEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('soundEnabled', value);
+  }
+
+  // Get Sound Enabled
+  Future<bool?> getSoundEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('soundEnabled');
+  }
+
 }

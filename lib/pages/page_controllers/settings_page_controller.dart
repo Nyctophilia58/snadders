@@ -15,32 +15,41 @@ class SettingsPageController {
 
   final SharedPrefsService _prefsService = SharedPrefsService();
 
-  void toggleSound(bool value) {
+  Future<void> loadSettings() async {
+    soundEnabled = await _prefsService.getSoundEnabled() ?? true;
+    // selectedLanguage = await _prefsService.getSelectedLanguage() ?? 'English';
+    // selectedBoard = await _prefsService.getSelectedBoard() ?? 'Classic';
+  }
+
+  Future<void> toggleSound(bool value) async {
     soundEnabled = value;
+    await _prefsService.saveSoundEnabled(value);
   }
 
-  void selectLanguage(String language) {
+  Future<void> selectLanguage(String language) async {
     selectedLanguage = language;
+    // await _prefsService.saveSelectedLanguage(language);
   }
 
-  void selectBoard(String board) {
+  Future<void> selectBoard(String board) async {
     selectedBoard = board;
+    // await _prefsService.saveSelectedBoard(board);
   }
 
   void openStore(BuildContext context, IAPService iapService) {
-    // Navigator.pop(context);
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) => StorePage(initialTabIndex: 2, iapService: iapService),
-    //   ),
-    // );
+    Navigator.pop(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StorePage(initialTabIndex: 2, iapService: iapService),
+      ),
+    );
   }
   void openHelpSupport() {}
   void openNotifications() {}
   void troubleshoot() {}
 
-  void requestAccountDeletion(BuildContext context, IAPService iapService) async {
+  Future<void> requestAccountDeletion(BuildContext context, IAPService iapService) async {
     // Ask for confirmation first
     final confirmed = await showDialog<bool>(
       context: context,
@@ -67,33 +76,24 @@ class SettingsPageController {
     if (confirmed != true) return; // User canceled
 
     try {
-      // Clear all prefs (coins, diamonds, username, guest, profileImage, etc.)
       await _prefsService.clearAll();
-
-      // Reset coins & diamonds to default
       await _prefsService.saveCoins(SharedPrefsService.defaultCoins);
       await _prefsService.saveDiamonds(SharedPrefsService.defaultDiamonds);
 
-      // Reset all boards (locked again)
       for (int i = 3; i < 8; i++) {
         await _prefsService.saveBoardUnlocked(i, false);
       }
 
-      // Reset ads unlocks
       await _prefsService.setAllAdsRemoved(false);
       await _prefsService.setRewardedAdsRemoved(false);
-
-      // Reset rating flag
       await _prefsService.setRated(false);
 
-      // Update IAPService notifiers so UI updates immediately
       iapService.coinsNotifier.value = SharedPrefsService.defaultCoins;
       iapService.diamondsNotifier.value = SharedPrefsService.defaultDiamonds;
       iapService.unlockedBoardsNotifier.value = {};
       iapService.allAdsRemovedNotifier.value = false;
       iapService.rewardedAdsRemovedNotifier.value = false;
 
-      // Show confirmation to user
       if (context.mounted) {
         Navigator.pushReplacement(
           context,
@@ -146,7 +146,6 @@ class SettingsPageController {
       return;
     }
 
-    // Try to show in-app review
     if (await inAppReview.isAvailable()) {
       try {
         await inAppReview.requestReview(); // show in-app popup
@@ -157,7 +156,6 @@ class SettingsPageController {
       await inAppReview.openStoreListing(); // fallback
     }
 
-    // Save that user has rated
     await _prefsService.setRated(true);
 
     showDialog(

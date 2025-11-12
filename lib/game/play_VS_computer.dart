@@ -1,10 +1,10 @@
 import 'dart:math';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import 'package:snadders/services/ad_services/ad_banner_service.dart';
+import '../widgets/audio_manager.dart';
 import '../widgets/exit_button.dart';
 import 'data/ladders_data.dart';
 import 'data/snakes_data.dart';
@@ -25,7 +25,6 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   late GameController controller;
   late AnimationController _winnerAnimationController;
   late Animation<double> _winnerAnimation;
-  late final AudioPlayer _audioPlayer;
 
   final List<Color> playerColors = [Colors.green, Colors.red];
   final List<String> colorNames = ['green', 'red'];
@@ -40,7 +39,6 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
     controller = GameController(
       totalPlayers: 2,
       boardNumber: widget.boardIndex + 1,
@@ -83,7 +81,6 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
       c.dispose();
     }
     _winnerAnimationController.dispose();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -141,7 +138,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   }
 
   Future<void> _animateTokenHop(int index, int targetPosition) async {
-    await _audioPlayer.play(AssetSource('audios/jump-6293.mp3'));
+    await AudioManager.instance.playSFX('audios/jump-6293.mp3');
     final animCtrl = _tokenControllers[index];
     final Offset startOffset = _getCellOffset(controller.playerPositions[index]);
     final Offset endOffset = _getCellOffset(targetPosition);
@@ -169,7 +166,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   }
 
   Future<void> _animateLadder(int index, int start, int end) async {
-    await _audioPlayer.play(AssetSource('audios/climb-5169.mp3'));
+    await AudioManager.instance.playSFX('audios/climb-5169.mp3');
     final animCtrl = _tokenControllers[index];
     final Offset startOffset = _getCellOffset(start);
     final Offset endOffset = _getCellOffset(end);
@@ -197,7 +194,7 @@ class _PlayVsComputerState extends State<PlayVsComputer> with TickerProviderStat
   }
 
   Future<void> _animateSnake(int index, int start, int end, {int maxSpins = 6}) async {
-    await _audioPlayer.play(AssetSource('audios/hiss-3724.mp3'));
+    await AudioManager.instance.playSFX('audios/hiss-3724.mp3');
     final animCtrl = _tokenControllers[index];
     final rotationCtrl = AnimationController(
       vsync: this,

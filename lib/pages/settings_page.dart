@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/settings_page_controller.dart';
 import 'package:snadders/services/iap_services.dart';
+import '../widgets/audio_manager.dart';
 import '../widgets/exit_button.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -13,6 +14,14 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final SettingsPageController controller = SettingsPageController();
+
+  @override
+  void initState() {
+    super.initState();
+    controller.loadSettings().then((_) {
+      setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,26 +59,24 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 20),
 
               // Audio toggle
-              _buildToggle("Audio", controller.soundEnabled, (val) {
-                setState(() {
-                  controller.toggleSound(val);
-                });
+              _buildToggle("Audio", controller.soundEnabled, (val) async {
+                await controller.toggleSound(val);
+                AudioManager.instance.setEnabled(val);
+                setState(() {});
               }),
               const SizedBox(height: 20),
 
               // Language selection
-              _buildDropdown("Language", controller.selectedLanguage, controller.languages, (val) {
-                setState(() {
-                  controller.selectLanguage(val);
-                });
+              _buildDropdown("Language", controller.selectedLanguage, controller.languages, (val) async {
+                await controller.selectLanguage(val);
+                setState(() {});
               }),
               const SizedBox(height: 20),
 
               // Board selection
-              _buildDropdown("Boards", controller.selectedBoard, controller.boardThemes, (val) {
-                setState(() {
-                  controller.selectBoard(val);
-                });
+              _buildDropdown("Boards", controller.selectedBoard, controller.boardThemes, (val) async {
+                await controller.selectBoard(val);
+                setState(() {});
               }),
 
               // Other options
@@ -93,11 +100,8 @@ class _SettingsPageState extends State<SettingsPage> {
               }),
 
               // Account Deletion
-              _buildOption("Request Account Deletion", () {
-                controller.requestAccountDeletion(
-                  context,
-                  widget.iapService,
-                );
+              _buildOption("Request Account Deletion", () async {
+                await controller.requestAccountDeletion(context, widget.iapService);
               }),
 
               // Rate Us
