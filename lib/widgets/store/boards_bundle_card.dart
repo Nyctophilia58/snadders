@@ -21,7 +21,7 @@ class BundleBoardCard extends StatelessWidget {
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.cyanAccent, Colors.blueAccent],
+                    colors: [Colors.red, Colors.orangeAccent],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
