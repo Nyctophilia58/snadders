@@ -25,23 +25,28 @@ class _AdRemovalSelectionDialogState extends State<AdRemovalSelectionDialog> {
   Future<void> _buyProduct(String productId) async {
     setState(() => isProcessing = true);
 
-    await widget.iapService.purchaseNonConsumable(productId);
+    // Listen for purchase completion
+    void listener() {
+      if ((productId == IAPService.removeAllAdsId && widget.iapService.allAdsRemovedNotifier.value) ||
+          (productId == IAPService.removeRewardedAdsId && widget.iapService.rewardedAdsRemovedNotifier.value)) {
+        setState(() => isProcessing = false);
+        Navigator.of(context).pop(); // close if both purchased
+        if (productId == IAPService.removeAllAdsId) {
+          widget.iapService.allAdsRemovedNotifier.removeListener(listener);
+        } else {
+          widget.iapService.rewardedAdsRemovedNotifier.removeListener(listener);
+        }
+      }
+    }
 
-    // Update the local state and notifier
     if (productId == IAPService.removeAllAdsId) {
-      allAdsRemoved = true;
-      widget.iapService.allAdsRemovedNotifier.value = true;
-    } else if (productId == IAPService.removeRewardedAdsId) {
-      rewardedAdsRemoved = true;
-      widget.iapService.rewardedAdsRemovedNotifier.value = true;
+      widget.iapService.allAdsRemovedNotifier.addListener(listener);
+    } else {
+      widget.iapService.rewardedAdsRemovedNotifier.addListener(listener);
     }
 
-    setState(() => isProcessing = false);
-
-    // If both purchased, close dialog immediately
-    if (allAdsRemoved && rewardedAdsRemoved) {
-      Navigator.of(context).pop();
-    }
+    // Trigger purchase
+    await widget.iapService.purchaseNonConsumable(productId);
   }
 
   @override
