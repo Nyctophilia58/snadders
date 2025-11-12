@@ -14,6 +14,7 @@ class SharedPrefsService {
   static const String _allAdsRemovedKey = 'isAllAdsRemoved';
   static const String _rewardedAdsRemovedKey = 'isRewardedAdsRemoved';
   static const String _userIdKey = 'userId';
+  static const String _soundEnabledKey = 'sound_enabled';
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
   static const int defaultCoins = 500;
@@ -288,13 +289,12 @@ class SharedPrefsService {
   // Save sound Enabled
   Future<void> saveSoundEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setBool('soundEnabled', value);
+    await prefs.setBool(_soundEnabledKey, value);
   }
 
   // Get Sound Enabled
   Future<bool?> getSoundEnabled() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('soundEnabled');
+    return prefs.getBool(_soundEnabledKey);
   }
-
 }

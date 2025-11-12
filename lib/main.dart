@@ -5,6 +5,7 @@ import 'package:snadders/pages/splash_screen.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:snadders/widgets/active_status_wrapper.dart';
+import 'package:snadders/widgets/audio_manager.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -12,6 +13,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await AudioManager.instance.init();
   MobileAds.instance.initialize();
   runApp(const ProviderScope(child: MyApp()));
 }

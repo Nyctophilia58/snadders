@@ -1,38 +1,25 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:snadders/services/shared_prefs_service.dart';
 
 class AudioManager {
-  AudioManager._privateConstructor();
-  static final AudioManager instance = AudioManager._privateConstructor();
+  static final AudioManager instance = AudioManager._internal();
 
-  bool _enabled = true;
-  bool get enabled => _enabled;
+  bool enabled = true;
+  AudioManager._internal();
 
-  final AudioPlayer _bgmPlayer = AudioPlayer();
+  Future<void> init() async {
+    final prefs = SharedPrefsService();
+    enabled = await prefs.getSoundEnabled() ?? true;
+  }
 
   void setEnabled(bool value) {
-    _enabled = value;
-
-    if (!_enabled) {
-      _bgmPlayer.pause();
-      // optionally stop all SFX if needed
-    }
-  }
-
-  // Background music
-  Future<void> playBGM(String filename, {bool loop = true}) async {
-    if (!_enabled) return;
-
-    _bgmPlayer.setReleaseMode(loop ? ReleaseMode.loop : ReleaseMode.release);
-    await _bgmPlayer.play(AssetSource(filename));
-  }
-
-  Future<void> stopBGM() async {
-    await _bgmPlayer.stop();
+    enabled = value;
+    SharedPrefsService().saveSoundEnabled(value);
   }
 
   // Sound effects (one-shots)
   Future<void> playSFX(String filename) async {
-    if (!_enabled) return;
+    if (!enabled) return;
     // Each SFX gets its own AudioPlayer
     AudioPlayer player = AudioPlayer();
     await player.play(AssetSource(filename));
