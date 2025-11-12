@@ -2,33 +2,32 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:snadders/services/shared_prefs_service.dart';
-
 import '../constants/board_constants.dart';
 
 class IAPService {
   // Consumable coin product IDs
-  static const String _coins10kId = 'coins_10k';
-  static const String _coins30kId = 'coins_30k';
-  static const String _coins100kId = 'coins_100k';
-  static const String _coins250kId = 'coins_250k';
-  static const String _coins1MId = 'coins_1m';
-  static const String _coins2MId = 'coins_2m';
+  static const String _coins10kId = 'coins10k';
+  static const String _coins30kId = 'coins30k';
+  static const String _coins100kId = 'coins100k';
+  static const String _coins250kId = 'coins250k';
+  static const String _coins1MId = 'coins1m';
+  static const String _coins2MId = 'coins2m';
 
   // Consumable diamond product IDs
-  static const String _diamonds200Id = 'diamonds_200';
-  static const String _diamonds400Id = 'diamonds_400';
-  static const String _diamonds800Id = 'diamonds_800';
-  static const String _diamonds1600Id = 'diamonds_1600';
-  static const String _diamonds3200Id = 'diamonds_3200';
-  static const String _diamonds6400Id = 'diamonds_6400';
+  static const String _diamonds200Id = 'diamonds200';
+  static const String _diamonds400Id = 'diamonds400';
+  static const String _diamonds800Id = 'diamonds800';
+  static const String _diamonds1600Id = 'diamonds1600';
+  static const String _diamonds3200Id = 'diamonds3200';
+  static const String _diamonds6400Id = 'diamonds6400';
 
   // Bundle IDs
-  static const String _bundleOfferId = 'bundle_offer_100k_coins_100_diamonds';
-  static const String _bundleBoardsId = "bundle_boards";
+  static const String _bundleOfferId = 'bundle_coins_and_diamonds';
+  static const String _bundleBoardsId = "bundle_board";
 
   // Non-consumable product IDs
-  static const String _removeAllAdsId = 'remove_all_ads';
-  static const String _removeRewardedAdsId = 'remove_rewarded_ads';
+  static const String _removeAllAdsId = 'all_ads';
+  static const String _removeRewardedAdsId = 'rewarded_ads';
 
   // Getters for Consumable coin product IDs
   static String get coins10kId => _coins10kId;
@@ -125,7 +124,7 @@ class IAPService {
     );
 
     // Restore previous purchases
-    await _iap.restorePurchases();
+    // await _iap.restorePurchases();
   }
 
   // Purchase Consumable Product
@@ -217,7 +216,7 @@ class IAPService {
         }
 
         // Board unlocks
-        if (purchase.productID.startsWith('board_')) {
+        if (purchase.productID.startsWith('board')) {
           final index = int.parse(purchase.productID.split('_')[1]);
           await _prefsService.saveBoardUnlocked(index, true);
           unlockedBoardsNotifier.value = {...unlockedBoardsNotifier.value, index};
