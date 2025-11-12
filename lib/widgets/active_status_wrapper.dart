@@ -14,27 +14,54 @@ class _ActiveStatusWrapperState extends State<ActiveStatusWrapper>
     with WidgetsBindingObserver {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _userId;
+  SharedPreferences? _prefs;
+  late ValueNotifier<String?> _userIdNotifier;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadUserIdAndSetActive();
+    _initSharedPrefs();
+  }
+
+  Future<void> _initSharedPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    _userId = _prefs?.getString('userId');
+
+    // ValueNotifier to detect changes in userId after sign-in
+    _userIdNotifier = ValueNotifier<String?>(_userId);
+    _userIdNotifier.addListener(() {
+      final newUserId = _userIdNotifier.value;
+      if (newUserId != null && newUserId != _userId) {
+        _userId = newUserId;
+        _setActiveStatus(true);
+      }
+    });
+
+    _pollUserId();
+
+    if (_userId != null) {
+      await _setActiveStatus(true);
+    }
+  }
+
+  void _pollUserId() async {
+    while (mounted && _userId == null) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      final newUserId = _prefs?.getString('userId');
+      if (newUserId != null) {
+        _userIdNotifier.value = newUserId;
+        break;
+      }
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _setActiveStatus(false);
+    _userIdNotifier.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadUserIdAndSetActive() async {
-    final prefs = await SharedPreferences.getInstance();
-    _userId = prefs.getString('userId');
-    if (_userId != null) {
-      await _setActiveStatus(true);
-    }
   }
 
   @override
@@ -55,9 +82,9 @@ class _ActiveStatusWrapperState extends State<ActiveStatusWrapper>
         'isActive': isActive,
         'lastActive': FieldValue.serverTimestamp(),
       });
-      print('User $_userId active status: $isActive');
+      // print('User $_userId active status: $isActive');
     } catch (e) {
-      print('Error updating active status: $e');
+      debugPrint('Error updating active status: $e');
     }
   }
 
