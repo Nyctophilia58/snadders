@@ -13,7 +13,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await AudioManager.instance.init();
   MobileAds.instance.initialize();
   runApp(const ProviderScope(child: MyApp()));
 }

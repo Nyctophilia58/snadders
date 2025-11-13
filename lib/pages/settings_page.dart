@@ -1,26 +1,32 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snadders/pages/page_controllers/settings_page_controller.dart';
 import 'package:snadders/services/iap_services.dart';
+import 'package:snadders/widgets/fetch_app_version.dart';
+import '../game/board_selection.dart';
+import '../providers/board_provider.dart';
 import '../widgets/audio_manager.dart';
 import '../widgets/exit_button.dart';
+import 'package:snadders/providers/audio_provider.dart';
 
-class SettingsPage extends StatefulWidget {
+import 'contact_us.dart';
+
+class SettingsPage extends ConsumerStatefulWidget {
+  final String username;
   final IAPService iapService;
-  const SettingsPage({super.key, required this.iapService});
+  const SettingsPage({super.key, required this.iapService, required this.username});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends ConsumerState<SettingsPage> {
   final SettingsPageController controller = SettingsPageController();
 
   @override
   void initState() {
     super.initState();
-    controller.loadSettings().then((_) {
-      setState(() {});
-    });
   }
 
   @override
@@ -58,72 +64,38 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 20),
 
-              // Audio toggle
-              _buildToggle("Audio", controller.soundEnabled, (val) async {
-                await controller.toggleSound(val);
-                AudioManager.instance.setEnabled(val);
-                setState(() {});
-              }),
-              const SizedBox(height: 20),
+              // Audio toggle using Riverpod
+              _buildAudioToggle(),
 
-              // Language selection
-              _buildDropdown("Language", controller.selectedLanguage, controller.languages, (val) async {
-                await controller.selectLanguage(val);
-                setState(() {});
-              }),
-              const SizedBox(height: 20),
+              // Board selector button
+              _buildBoardSelectorButton(),
 
-              // Board selection
-              _buildDropdown("Boards", controller.selectedBoard, controller.boardThemes, (val) async {
-                await controller.selectBoard(val);
-                setState(() {});
-              }),
+              // Store option
+              _buildOption("Store", () => controller.openStore(context, widget.iapService)),
 
-              // Other options
-              _buildOption("Store", () {
-                controller.openStore(context, widget.iapService);
-              }),
-
-              // Help & Support
-              _buildOption("Help & Support", () {
-                controller.openHelpSupport();
-              }),
-
-              // Notifications
-              _buildOption("Notifications", () {
-                controller.openNotifications();
-              }),
-
-              // Troubleshoot
-              _buildOption("Troubleshoot", () {
-                controller.troubleshoot();
-              }),
-
-              // Account Deletion
-              _buildOption("Request Account Deletion", () async {
-                await controller.requestAccountDeletion(context, widget.iapService);
-              }),
-
-              // Rate Us
-              _buildOption("Rate Us", () async {
-                await controller.rateUs(context);
-              }),
-
-              // Share
-              _buildOption("Share", () {
-                controller.shareApp();
-              }),
-
-              // App version
-              _buildOption("Version: 1.0.0", null, showArrow: false),
-              const SizedBox(height: 20),
-
-              // Exit button
-              ExitButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+              // Help & Support option
+              _buildOption(
+                "Help & Support",
+                () {
+                  showDialog(context: context, builder: (_) => ContactUs(username: widget.username));
+                }
               ),
+
+              _buildOption("Notifications", controller.openNotifications),
+
+              _buildOption("Troubleshoot", controller.troubleshoot),
+
+              _buildOption(
+                "Request Account Deletion",
+                    () => controller.requestAccountDeletion(context, widget.iapService),
+              ),
+              _buildOption("Rate Us", () => controller.rateUs(context)),
+              _buildOption("Share", controller.shareApp),
+
+              ExitButton(onPressed: () => Navigator.of(context).pop()),
+              const SizedBox(height: 20),
+
+              VersionText(),
             ],
           ),
         ),
@@ -131,39 +103,52 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildToggle(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildAudioToggle() {
+    final isAudioEnabled = ref.watch(audioProvider);
+    final audioNotifier = ref.read(audioProvider.notifier);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        Switch(
-          value: value,
-          activeThumbColor: Colors.white,
-          onChanged: onChanged,
+        const Text("Audio", style: TextStyle(color: Colors.white, fontSize: 16)),
+        CupertinoSwitch(
+          value: isAudioEnabled,
+          onChanged: (val) async {
+            await audioNotifier.toggleAudio(val);
+            AudioManager.instance.setEnabled(val);
+          },
         ),
       ],
     );
   }
 
-  Widget _buildDropdown(
-      String label, String selected, List<String> options, ValueChanged<String> onChanged) {
+  Widget _buildBoardSelectorButton() {
+    final selectedBoardIndex = ref.watch(boardProvider);
+    final boardNotifier = ref.read(boardProvider.notifier);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        DropdownButton<String>(
-          value: selected,
-          dropdownColor: Colors.blueAccent,
-          items: options
-              .map((val) => DropdownMenuItem(
-            value: val,
-            child: Text(val, style: const TextStyle(color: Colors.white)),
-          ))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) onChanged(value);
+        const Text("Board", style: TextStyle(color: Colors.white, fontSize: 16)),
+        ElevatedButton(
+          onPressed: () async {
+            final selectedIndex = await showDialog<int>(
+              context: context,
+              builder: (_) => BoardSelector(iapService: widget.iapService),
+            );
+
+            if (selectedIndex != null) {
+              await boardNotifier.selectBoard(selectedIndex);
+            }
           },
-          iconEnabledColor: Colors.white,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueAccent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: Text(
+            "Board ${selectedBoardIndex+1}",
+            style: const TextStyle(color: Colors.white),
+          ),
         ),
       ],
     );
@@ -172,7 +157,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildOption(String label, VoidCallback? onTap, {bool showArrow = true}) {
     return ListTile(
       title: Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
-      trailing: showArrow ? const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16) : null,
+      trailing:
+      showArrow ? const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16) : null,
       onTap: onTap,
     );
   }

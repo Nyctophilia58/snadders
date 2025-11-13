@@ -15,6 +15,7 @@ class SharedPrefsService {
   static const String _rewardedAdsRemovedKey = 'isRewardedAdsRemoved';
   static const String _userIdKey = 'userId';
   static const String _soundEnabledKey = 'sound_enabled';
+  static const String _selectedBoardKey = 'selected_board';
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
   static const int defaultCoins = 500;
@@ -296,5 +297,17 @@ class SharedPrefsService {
   Future<bool?> getSoundEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_soundEnabledKey);
+  }
+
+  // Save selected board
+  Future<void> saveSelectedBoard(int board) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_selectedBoardKey, board);
+  }
+
+  // Get selected board
+  Future<int?> getSelectedBoard() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_selectedBoardKey);
   }
 }

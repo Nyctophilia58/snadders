@@ -17,11 +17,9 @@ class AudioManager {
     SharedPrefsService().saveSoundEnabled(value);
   }
 
-  // Sound effects (one-shots)
   Future<void> playSFX(String filename) async {
     if (!enabled) return;
-    // Each SFX gets its own AudioPlayer
-    AudioPlayer player = AudioPlayer();
+    final player = AudioPlayer();
     await player.play(AssetSource(filename));
   }
 }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:snadders/pages/contact_us.dart';
 import '../../services/shared_prefs_service.dart';
 import '../../services/iap_services.dart';
 import '../sign_in_page.dart';
 import '../store_page.dart';
 
 class SettingsPageController {
-  bool soundEnabled = true;
   String selectedLanguage = 'English';
   String selectedBoard = 'Classic';
 
@@ -15,42 +15,21 @@ class SettingsPageController {
 
   final SharedPrefsService _prefsService = SharedPrefsService();
 
-  Future<void> loadSettings() async {
-    soundEnabled = await _prefsService.getSoundEnabled() ?? true;
-    // selectedLanguage = await _prefsService.getSelectedLanguage() ?? 'English';
-    // selectedBoard = await _prefsService.getSelectedBoard() ?? 'Classic';
-  }
-
-  Future<void> toggleSound(bool value) async {
-    soundEnabled = value;
-    await _prefsService.saveSoundEnabled(value);
-  }
-
-  Future<void> selectLanguage(String language) async {
-    selectedLanguage = language;
-    // await _prefsService.saveSelectedLanguage(language);
-  }
-
-  Future<void> selectBoard(String board) async {
-    selectedBoard = board;
-    // await _prefsService.saveSelectedBoard(board);
-  }
-
   void openStore(BuildContext context, IAPService iapService) {
     Navigator.pop(context);
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => StorePage(initialTabIndex: 2, iapService: iapService),
+        builder: (_) => StorePage(initialTabIndex: 0, iapService: iapService),
       ),
     );
   }
-  void openHelpSupport() {}
+
   void openNotifications() {}
+
   void troubleshoot() {}
 
   Future<void> requestAccountDeletion(BuildContext context, IAPService iapService) async {
-    // Ask for confirmation first
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -129,7 +108,6 @@ class SettingsPageController {
     final hasRated = await _prefsService.getRated() ?? false;
 
     if (hasRated) {
-      // showDialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -148,12 +126,12 @@ class SettingsPageController {
 
     if (await inAppReview.isAvailable()) {
       try {
-        await inAppReview.requestReview(); // show in-app popup
+        await inAppReview.requestReview();
       } catch (_) {
-        await inAppReview.openStoreListing(); // fallback
+        await inAppReview.openStoreListing();
       }
     } else {
-      await inAppReview.openStoreListing(); // fallback
+      await inAppReview.openStoreListing();
     }
 
     await _prefsService.setRated(true);
