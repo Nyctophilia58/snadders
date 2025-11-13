@@ -47,4 +47,4 @@ app.*.map.json
 /android/key.properties
 lib/constants/ad_unit_ids.dart
 test/constants/ad_unit_ids_test.dart
-lib/pages/contact_us.dart
+lib/constants/api_key.dart
