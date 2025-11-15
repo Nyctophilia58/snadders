@@ -5,7 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import 'package:snadders/services/ad_services/ad_banner_service.dart';
 import '../widgets/audio_manager.dart';
-import '../widgets/exit_button.dart';
+import '../widgets/buttons/exit_button.dart';
 import 'data/ladders_data.dart';
 import 'data/snakes_data.dart';
 import 'game_utils.dart';

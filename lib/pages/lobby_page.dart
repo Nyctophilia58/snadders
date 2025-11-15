@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../widgets/exit_button.dart';
+import '../widgets/buttons/exit_button.dart';
 
 class LobbyPage extends StatefulWidget {
   final String username;

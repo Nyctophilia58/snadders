@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:snadders/widgets/exit_button.dart';
+import 'package:snadders/widgets/buttons/exit_button.dart';
 import '../constants/lobby_coin_values.dart';
 
 class CoinSelectionPage extends StatefulWidget {

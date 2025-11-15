@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:snadders/widgets/exit_button.dart';
+import 'package:snadders/widgets/buttons/exit_button.dart';
 
 void main() {
   testWidgets('ExitButton renders correctly and triggers onPressed when tapped', (WidgetTester tester) async {

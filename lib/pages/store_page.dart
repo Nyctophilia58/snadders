@@ -4,7 +4,7 @@ import 'package:snadders/services/iap_services.dart';
 import '../widgets/store/boards_tab.dart';
 import '../widgets/store/coins_tab.dart';
 import '../widgets/store/diamonds_tab.dart';
-import '../widgets/exit_button.dart';
+import '../widgets/buttons/exit_button.dart';
 import '../pages/home_page.dart'; // import your home page
 
 class StorePage extends StatefulWidget {

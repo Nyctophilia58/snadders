@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/sign_in_page_controller.dart';
 import 'package:snadders/services/iap_services.dart';
-import '../widgets/exit_button.dart';
+import '../widgets/buttons/exit_button.dart';
 import '../pages/home_page.dart';
 
 class SignInPage extends StatefulWidget {

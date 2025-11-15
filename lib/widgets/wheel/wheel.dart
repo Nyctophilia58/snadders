@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:snadders/services/iap_services.dart';
-import 'package:snadders/widgets/exit_button.dart';
+import 'package:snadders/widgets/buttons/exit_button.dart';
 import '../../services/shared_prefs_service.dart';
 import 'spin_choice_card.dart';
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/statistics_page_controller.dart';
 
 import '../widgets/profile/profile_avatar.dart';
-import '../widgets/exit_button.dart';
+import '../widgets/buttons/exit_button.dart';
 
 class StatisticsPage extends StatefulWidget {
   final String username;
