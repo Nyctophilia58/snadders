@@ -179,12 +179,7 @@ class SharedPrefsService {
   Future<void> clearAll() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_coinsKey);
-      await prefs.remove(_diamondsKey);
-      await prefs.remove(_lastSpinTimestampKey);
-      await prefs.remove(_usernameKey);
-      await prefs.remove(_isGuestKey);
-      await prefs.remove(_profileImageKey);
+      await prefs.clear();
     } catch (e) {
       print('Error clearing data: $e');
     }

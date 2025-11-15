@@ -7,10 +7,10 @@ import 'package:snadders/widgets/fetch_app_version.dart';
 import '../game/board_selection.dart';
 import '../providers/board_provider.dart';
 import '../widgets/audio_manager.dart';
-import '../widgets/exit_button.dart';
+import '../widgets/buttons/exit_button.dart';
 import 'package:snadders/providers/audio_provider.dart';
-
 import 'contact_us.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   final String username;
@@ -32,73 +32,110 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Colors.teal, Colors.blueAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Settings",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white.withOpacity(0.9),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.teal, Colors.blueAccent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Settings",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Audio toggle using Riverpod
+                  _buildAudioToggle(),
+
+                  // Board selector button
+                  _buildBoardSelectorButton(),
+
+                  // Store option
+                  _buildOption("Store", () => controller.openStore(context, widget.iapService)),
+
+                  // Help & Support option
+                  _buildOption(
+                      "Help & Support",
+                          () {
+                        showDialog(context: context, builder: (_) => ContactUs(username: widget.username));
+                      }
+                  ),
+
+                  _buildOption("Notifications", controller.openNotifications),
+
+                  _buildOption("Troubleshoot", controller.troubleshoot),
+
+                  _buildOption(
+                    "Request Account Deletion",
+                        () => controller.requestAccountDeletion(context, widget.iapService),
+                  ),
+
+                  const SizedBox(height: 20),
+                  VersionText(),
+                ],
               ),
-              const SizedBox(height: 20),
-
-              // Audio toggle using Riverpod
-              _buildAudioToggle(),
-
-              // Board selector button
-              _buildBoardSelectorButton(),
-
-              // Store option
-              _buildOption("Store", () => controller.openStore(context, widget.iapService)),
-
-              // Help & Support option
-              _buildOption(
-                "Help & Support",
-                () {
-                  showDialog(context: context, builder: (_) => ContactUs(username: widget.username));
-                }
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.thumb_up),
+                iconSize: 26,
+                onPressed: () async {
+                  await controller.rateUs(context);
+                },
               ),
 
-              _buildOption("Notifications", controller.openNotifications),
+              const SizedBox(width: 20),
 
-              _buildOption("Troubleshoot", controller.troubleshoot),
-
-              _buildOption(
-                "Request Account Deletion",
-                    () => controller.requestAccountDeletion(context, widget.iapService),
+              ExitButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
-              _buildOption("Rate Us", () => controller.rateUs(context)),
-              _buildOption("Share", controller.shareApp),
 
-              ExitButton(onPressed: () => Navigator.of(context).pop()),
-              const SizedBox(height: 20),
+              const SizedBox(width: 20),
 
-              VersionText(),
+              IconButton(
+                icon: const Icon(Icons.share),
+                iconSize: 26,
+                onPressed: () {
+                  Share.share(
+                    'I’m playing this awesome game! Download it now!\n\n'
+                    'https://play.google.com/store/apps/details?id=com.nowshin.snadders',
+                    subject: 'Check this out!',
+                  );
+                },
+              ),
             ],
           ),
-        ),
+
+        ],
       ),
     );
   }

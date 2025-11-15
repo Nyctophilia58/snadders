@@ -1,6 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
-import 'package:snadders/pages/contact_us.dart';
+import '../../services/google_play_services.dart';
 import '../../services/shared_prefs_service.dart';
 import '../../services/iap_services.dart';
 import '../sign_in_page.dart';
@@ -52,26 +53,21 @@ class SettingsPageController {
       ),
     );
 
-    if (confirmed != true) return; // User canceled
+    if (confirmed != true) return;
 
     try {
-      await _prefsService.clearAll();
-      await _prefsService.saveCoins(SharedPrefsService.defaultCoins);
-      await _prefsService.saveDiamonds(SharedPrefsService.defaultDiamonds);
+      final sharedPrefs = SharedPrefsService();
+      final userId = await sharedPrefs.getUserId();
+      final isGuest = await sharedPrefs.getIsGuest();
 
-      for (int i = 3; i < 8; i++) {
-        await _prefsService.saveBoardUnlocked(i, false);
+      // Delete Firestore doc
+      if (userId != null) {
+        final collectionName = isGuest ? 'guestUsers' : 'googleUsers';
+        await FirebaseFirestore.instance.collection(collectionName).doc(userId).delete();
       }
 
-      await _prefsService.setAllAdsRemoved(false);
-      await _prefsService.setRewardedAdsRemoved(false);
-      await _prefsService.setRated(false);
-
-      iapService.coinsNotifier.value = SharedPrefsService.defaultCoins;
-      iapService.diamondsNotifier.value = SharedPrefsService.defaultDiamonds;
-      iapService.unlockedBoardsNotifier.value = {};
-      iapService.allAdsRemovedNotifier.value = false;
-      iapService.rewardedAdsRemovedNotifier.value = false;
+      // Clear SharedPreferences
+      await SharedPrefsService().clearAll();
 
       if (context.mounted) {
         Navigator.pushReplacement(
@@ -100,9 +96,7 @@ class SettingsPageController {
     }
   }
 
-  void shareApp() {}
-
-  /// Rate Us with already-rated check
+  // Rate Us with already-rated check
   Future<void> rateUs(BuildContext context) async {
     final InAppReview inAppReview = InAppReview.instance;
     final hasRated = await _prefsService.getRated() ?? false;
