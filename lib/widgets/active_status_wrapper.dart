@@ -78,10 +78,10 @@ class _ActiveStatusWrapperState extends State<ActiveStatusWrapper>
   Future<void> _setActiveStatus(bool isActive) async {
     if (_userId == null) return;
     try {
-      await _firestore.collection('googleUsers').doc(_userId).update({
+      await _firestore.collection('googleUsers').doc(_userId).set({
         'isActive': isActive,
         'lastActive': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
       // print('User $_userId active status: $isActive');
     } catch (e) {
       debugPrint('Error updating active status: $e');

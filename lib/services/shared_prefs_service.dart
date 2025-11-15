@@ -305,4 +305,16 @@ class SharedPrefsService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_selectedBoardKey);
   }
+
+  // Public getter for userId
+  Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userIdKey);
+  }
+
+  // Public getter for isGuest
+  Future<bool> getIsGuest() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isGuestKey) ?? true;
+  }
 }
