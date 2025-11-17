@@ -29,7 +29,14 @@ class SignInNotifier extends StateNotifier<SignInState> {
   SignInNotifier() : super(SignInState(signedIn: false, username: ""));
 
   Future<void> checkSignInGoogle() async {
-    final signedIn = await GooglePlayServices.isSignedIn();
+    final isDeleted = await _sharedPrefsService.getAccountDeleted();
+    bool signedIn;
+
+    if (!isDeleted) {
+      signedIn = await GooglePlayServices.isSignedIn();
+    } else {
+      signedIn = false;
+    }
     String? username = "";
     String? userId;
 
