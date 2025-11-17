@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/sign_in_state_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,11 +18,13 @@ class SplashScreenController {
     if (!mountedCheck()) return;
     await signInNotifier.checkSignInGoogle();
 
+    if (!mountedCheck()) return;
     final signInState = ref.read(signInProvider);
     if (signInState.signedIn && !signInState.isGuest) {
       final username = signInState.username;
-      if (username.isNotEmpty) {
-        // Sync all user data from Firestore to local storage
+      final exists = await _checkUsernameInFirestore(username);
+      if (exists) {
+        debugPrint("Syncing user data for $username from Firestore.");
         await _syncUserDataFromFirestore(username);
       }
     }
@@ -35,6 +38,21 @@ class SplashScreenController {
     // Optional splash delay
     if (!mountedCheck()) return;
     await Future.delayed(const Duration(seconds: 3));
+  }
+
+  // Check if username exists in Firestore
+  Future<bool> _checkUsernameInFirestore(String username) async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('googleUsers')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
+      return query.docs.isNotEmpty;
+    } catch (e) {
+      print("Error checking username in Firestore: $e");
+      return false;
+    }
   }
 
   // Sync all user data from Firestore to local storage
