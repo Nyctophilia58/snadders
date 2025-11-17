@@ -179,7 +179,23 @@ class SharedPrefsService {
   Future<void> clearAll() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      // Clear all keys related to user data
+      await prefs.remove(_coinsKey);
+      await prefs.remove(_diamondsKey);
+      await prefs.remove(_lastSpinTimestampKey);
+      await prefs.remove(_usernameKey);
+      await prefs.remove(_isGuestKey);
+      await prefs.remove(_profileImageKey);
+      await prefs.remove(_ratedKey);
+      await prefs.remove(_allAdsRemovedKey);
+      await prefs.remove(_rewardedAdsRemovedKey);
+      await prefs.remove(_userIdKey);
+      await prefs.remove(_soundEnabledKey);
+      await prefs.remove(_selectedBoardKey);
+      // Clear board unlocks
+      for (int i = 0; i < boardImages.length; i++) {
+        await prefs.remove('$_boardKeyPrefix$i');
+      }
     } catch (e) {
       print('Error clearing data: $e');
     }
@@ -306,6 +322,12 @@ class SharedPrefsService {
     return prefs.getInt(_selectedBoardKey);
   }
 
+  // Save userId
+  Future<void> setUserId(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userIdKey, userId);
+  }
+
   // Public getter for userId
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -316,5 +338,17 @@ class SharedPrefsService {
   Future<bool> getIsGuest() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_isGuestKey) ?? true;
+  }
+
+  // Save account deleted
+  Future<void> setAccountDeleted(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('accountDeleted', value);
+  }
+
+  // Get account deleted
+  Future<bool> getAccountDeleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('accountDeleted') ?? false;
   }
 }
