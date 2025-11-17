@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:snadders/services/google_play_services.dart';
 import 'package:snadders/services/shared_prefs_service.dart';
+
+import '../../widgets/active_status_wrapper.dart';
 
 class SignInPageController {
   final SharedPrefsService _prefsService = SharedPrefsService();
@@ -8,6 +12,7 @@ class SignInPageController {
 
   /// Checks username in both collections
   Future<bool> _isUsernameTaken(String username) async {
+    username = username.toLowerCase();
     final googleQuery = await _firestore
         .collection('googleUsers')
         .where('username', isEqualTo: username)

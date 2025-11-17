@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/sign_in_page_controller.dart';
-import 'package:snadders/services/iap_services.dart';
+import 'package:snadders/services/username_validator.dart';
 import '../widgets/buttons/exit_button.dart';
 import '../pages/home_page.dart';
 
@@ -14,7 +14,8 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   final SignInPageController controller = SignInPageController();
-  bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isGuestLoading = false;
 
   @override
   void initState() {
@@ -40,6 +41,7 @@ class _SignInPageState extends State<SignInPage> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             // Background
@@ -101,12 +103,12 @@ class _SignInPageState extends State<SignInPage> {
                               children: [
                                 // Google Sign-In Button
                                 FilledButton.icon(
-                                  onPressed: _isLoading
+                                  onPressed: _isGoogleLoading
                                       ? null
                                       : () async {
-                                    setState(() => _isLoading = true);
+                                    setState(() => _isGoogleLoading = true);
                                     final username = await controller.signInWithGoogle();
-                                    setState(() => _isLoading = false);
+                                    setState(() => _isGoogleLoading = false);
 
                                     if (username != null) {
                                       await _navigateToHome(username, false);
@@ -143,7 +145,7 @@ class _SignInPageState extends State<SignInPage> {
 
                                 // Play as Guest Button
                                 OutlinedButton(
-                                  onPressed: _isLoading
+                                  onPressed: _isGuestLoading
                                       ? null
                                       : () {
                                     showDialog(
@@ -165,20 +167,30 @@ class _SignInPageState extends State<SignInPage> {
                                             ),
                                             ElevatedButton(
                                               onPressed: () async {
-                                                if (playerName.isNotEmpty) {
-                                                  final result = await controller.playAsGuest(playerName);
-                                                  if (result == null) {
-                                                    // Show error for duplicate username
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text("Username already taken. Please choose another."),
-                                                      ),
-                                                    );
-                                                    return;
-                                                  }
-                                                  Navigator.pop(context);
-                                                  await _navigateToHome(playerName, true);
+                                                FocusScope.of(context).unfocus();
+                                                playerName = playerName.trim();
+                                                final error = UsernameValidator.validate(playerName);
+                                                if (error != null) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(error),
+                                                    ),
+                                                  );
+                                                  return;
                                                 }
+                                                setState(() => _isGuestLoading = true);
+                                                final result = await controller.playAsGuest(playerName);
+                                                setState(() => _isGuestLoading = false);
+                                                if (result == null) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text("Username already taken. Please choose another."),
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+                                                Navigator.pop(context); // Close dialog
+                                                await _navigateToHome(result, true); // <-- Use result
                                               },
                                               child: const Text("Continue"),
                                             ),
@@ -206,11 +218,11 @@ class _SignInPageState extends State<SignInPage> {
                                     style: TextStyle(color: Colors.deepPurpleAccent),
                                   ),
                                 ),
-                                // if (_isLoading)
-                                //   const Padding(
-                                //     padding: EdgeInsets.only(top: 16),
-                                //     child: CircularProgressIndicator(),
-                                //   ),
+                                if (_isGoogleLoading || _isGuestLoading)
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 16),
+                                    child: CircularProgressIndicator(),
+                                  ),
                               ],
                             ),
                           ),
