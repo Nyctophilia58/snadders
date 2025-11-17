@@ -5,6 +5,7 @@ import 'package:validators/validators.dart';
 import 'package:http/http.dart' as http;
 
 import '../constants/api_key.dart';
+import '../widgets/buttons/exit_button.dart';
 // import 'package:cloud_functions/cloud_functions.dart';
 
 class ContactUs extends StatefulWidget {
@@ -166,136 +167,147 @@ class ContactUsState extends State<ContactUs> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.blueGrey[700],
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10)),
-          ],
-        ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Contact Us',
-                  style: TextStyle(
-                    color: Colors.tealAccent.shade100,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Username (read-only)
-                TextFormField(
-                  initialValue: widget.username,
-                  enabled: false,
-                  decoration: _buildInputDecoration('Username'),
-                  style: TextStyle(color: Colors.orangeAccent.shade200, fontSize: 16),
-                ),
-                const SizedBox(height: 16),
-
-                // Email with validators package
-                _buildTextField(
-                  _emailController,
-                  'Your E-Mail...',
-                  TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter your email';
-                    if (!isEmail(value)) return 'Please enter a valid email';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-
-                // CAPTCHA
-                Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey[700],
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10)),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Text(
-                        _captchaQuestion,
-                        style: const TextStyle(color: Colors.white70, fontSize: 16),
+                    Text(
+                      'Contact Us',
+                      style: TextStyle(
+                        color: Colors.tealAccent.shade100,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Expanded(
-                      flex: 2,
-                      child: _buildTextField(
-                        _captchaController,
-                        'Answer',
-                        TextInputType.number,
-                        onChanged: (_) => _validateCaptcha(),
-                        validator: (_) => _isCaptchaValid ? null : 'Incorrect answer',
+                    const SizedBox(height: 16),
+
+                    // Username (read-only)
+                    TextFormField(
+                      initialValue: widget.username,
+                      enabled: false,
+                      decoration: _buildInputDecoration('Username'),
+                      style: TextStyle(color: Colors.orangeAccent.shade200, fontSize: 16),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Email with validators package
+                    _buildTextField(
+                      _emailController,
+                      'Your E-Mail...',
+                      TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Please enter your email';
+                        if (!isEmail(value)) return 'Please enter a valid email';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // CAPTCHA
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _captchaQuestion,
+                            style: const TextStyle(color: Colors.white70, fontSize: 16),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _buildTextField(
+                            _captchaController,
+                            'Answer',
+                            TextInputType.number,
+                            onChanged: (_) => _validateCaptcha(),
+                            validator: (_) => _isCaptchaValid ? null : 'Incorrect answer',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Issue Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedIssue,
+                      dropdownColor: Colors.black87,
+                      decoration: _buildInputDecoration('Select Your Issue...'),
+                      items: _issues
+                          .map((issue) => DropdownMenuItem(
+                        value: issue,
+                        child: Text(issue, style: const TextStyle(color: Colors.white)),
+                      ))
+                          .toList(),
+                      onChanged: (value) => setState(() => _selectedIssue = value),
+                      validator: (value) => value == null ? 'Please select an issue' : null,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Message
+                    // Message
+                    TextFormField(
+                      controller: _messageController,
+                      maxLines: 4,
+                      keyboardType: TextInputType.multiline,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Type your message here...',  // <-- use hintText
+                        hintStyle: const TextStyle(color: Colors.white70),
+                        filled: true,
+                        fillColor: Colors.white10,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(color: Colors.tealAccent.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(color: Colors.tealAccent.shade200, width: 2),
+                        ),
+                        alignLabelWithHint: true, // important for multi-line alignment
                       ),
+                      validator: (value) =>
+                      value == null || value.isEmpty ? 'Please enter a message' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Send button
+                    ElevatedButton(
+                      onPressed: _sendMessage,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.tealAccent.shade400,
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Send',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-
-                // Issue Dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedIssue,
-                  dropdownColor: Colors.black87,
-                  decoration: _buildInputDecoration('Select Your Issue...'),
-                  items: _issues
-                      .map((issue) => DropdownMenuItem(
-                    value: issue,
-                    child: Text(issue, style: const TextStyle(color: Colors.white)),
-                  ))
-                      .toList(),
-                  onChanged: (value) => setState(() => _selectedIssue = value),
-                  validator: (value) => value == null ? 'Please select an issue' : null,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(height: 12),
-
-                // Message
-                // Message
-                TextFormField(
-                  controller: _messageController,
-                  maxLines: 4,
-                  keyboardType: TextInputType.multiline,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Type your message here...',  // <-- use hintText
-                    hintStyle: const TextStyle(color: Colors.white70),
-                    filled: true,
-                    fillColor: Colors.white10,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: BorderSide(color: Colors.tealAccent.shade200),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: BorderSide(color: Colors.tealAccent.shade200, width: 2),
-                    ),
-                    alignLabelWithHint: true, // important for multi-line alignment
-                  ),
-                  validator: (value) =>
-                  value == null || value.isEmpty ? 'Please enter a message' : null,
-                ),
-                const SizedBox(height: 16),
-
-                // Send button
-                ElevatedButton(
-                  onPressed: _sendMessage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.tealAccent.shade400,
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Send',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+
+          ExitButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
       ),
     );
   }
