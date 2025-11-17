@@ -9,6 +9,7 @@ import '../providers/board_provider.dart';
 import '../widgets/audio_manager.dart';
 import '../widgets/buttons/exit_button.dart';
 import 'package:snadders/providers/audio_provider.dart';
+import '../widgets/troubleshoot.dart';
 import 'contact_us.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -78,15 +79,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
                   // Help & Support option
                   _buildOption(
-                      "Help & Support",
-                          () {
-                        showDialog(context: context, builder: (_) => ContactUs(username: widget.username));
-                      }
+                    "Help & Support",
+                    () {
+                      showDialog(context: context, builder: (_) => ContactUs(username: widget.username));
+                    }
                   ),
 
                   _buildOption("Notifications", controller.openNotifications),
 
-                  _buildOption("Troubleshoot", controller.troubleshoot),
+                  _buildOption(
+                    "Troubleshoot",
+                    () {
+                      showDialog(context: context, builder: (_) => TroubleShoot(username: widget.username));
+                    }
+                  ),
 
                   _buildOption(
                     "Request Account Deletion",

@@ -30,8 +30,6 @@ class SettingsPageController {
 
   void openNotifications() {}
 
-  void troubleshoot() {}
-
   Future<void> requestAccountDeletion(BuildContext context, IAPService iapService) async {
     final confirmed = await showDialog<bool>(
       context: context,
