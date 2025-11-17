@@ -62,11 +62,11 @@ class LobbyPageState extends State<LobbyPage>
     return Scaffold(
       backgroundColor: const Color(0xFF151A1F).withOpacity(0.6),
       body: Center(
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 80),
+              padding: const EdgeInsets.only(bottom: 20),
               child: Card(
                 child: Container(
                   width: width * 0.9,
@@ -284,17 +284,11 @@ class LobbyPageState extends State<LobbyPage>
                 ),
               ),
             ),
-            Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Center(
-                  child: ExitButton(
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-              ),
+            ExitButton(
+              onPressed: () {
+                debugPrint('-----------@@@@@@@@Exit Lobby Pressed');
+                Navigator.pop(context);
+              }
             ),
           ],
         ),
