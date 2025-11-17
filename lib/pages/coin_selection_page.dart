@@ -37,9 +37,48 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.monetization_on, color: Colors.yellowAccent),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${widget.coins}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.diamond, color: Colors.cyanAccent),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${widget.diamonds}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           Card(
             color: Colors.transparent,
             elevation: 10,
@@ -95,7 +134,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                   ),
                   const SizedBox(height: 25),
 
-                  // 💰 Coins container row
+                  // Coins container row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -111,7 +150,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                       else
                         const SizedBox(width: 48),
 
-                      // 🪙 Central Card
+                      // Central Card
                       Flexible(
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -198,7 +237,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
 
                   const SizedBox(height: 35),
 
-                  // ▶ Play Button
+                  // Play Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -231,62 +270,10 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
               ),
             ),
           ),
-
-          Positioned(
-            top: -35,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.monetization_on, color: Colors.yellowAccent),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${widget.coins}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          decoration: TextDecoration.none,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.diamond, color: Colors.cyanAccent),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${widget.diamonds}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          decoration: TextDecoration.none,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ❌ Exit Button at Bottom
-          Positioned(
-            bottom: -60,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ExitButton(
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
+          const SizedBox(height: 20),
+          // Exit Button at Bottom
+          ExitButton(
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
