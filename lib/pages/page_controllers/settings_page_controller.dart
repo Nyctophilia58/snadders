@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:snadders/widgets/active_status_wrapper.dart';
+import '../../providers/sign_in_state_provider.dart';
 import '../../services/google_play_services.dart';
 import '../../services/shared_prefs_service.dart';
 import '../../services/iap_services.dart';
@@ -54,6 +56,7 @@ class SettingsPageController {
     );
 
     if (confirmed != true) return;
+    ActiveStatusWrapper.ignoreActiveStatus = true;
 
     try {
       final sharedPrefs = SharedPrefsService();
@@ -68,6 +71,10 @@ class SettingsPageController {
 
       // Clear SharedPreferences
       await SharedPrefsService().clearAll();
+      // make userId null in SharedPrefsService
+      await SharedPrefsService().setUserId('');
+      await SharedPrefsService().saveUsername('', isGuest: false);
+      await SharedPrefsService().setAccountDeleted(true);
 
       if (context.mounted) {
         Navigator.pushReplacement(
@@ -93,6 +100,8 @@ class SettingsPageController {
           ),
         );
       }
+    } finally {
+      ActiveStatusWrapper.ignoreActiveStatus = false;
     }
   }
 
