@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:snadders/pages/page_controllers/statistics_page_controller.dart';
-
+import 'package:snadders/services/username_validator.dart';
 import '../widgets/profile/profile_avatar.dart';
 import '../widgets/buttons/exit_button.dart';
 
@@ -29,6 +29,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
     56,
     (index) => 'assets/images/persons/${(index + 1).toString().padLeft(2, '0')}.png',
   );
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.white,
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -101,13 +110,31 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   void _saveUsername(String value) async {
+    final error = UsernameValidator.validate(value);
+
+    if (error != null) {
+      _showError(error);
+      return;
+    }
+
     await _controller.saveUsername(value, widget.isGuest);
     setState(() {});
   }
 
   void _saveProfile() async {
+    FocusScope.of(context).unfocus(); // close keyboard
+
+    final username = _usernameController.text.trim();
+    final error = UsernameValidator.validate(username);
+
+    if (error != null) {
+      _showError(error);
+      return; // stop if invalid
+    }
+
     await _controller.saveProfileImage(_selectedProfileImage);
-    _saveUsername(_usernameController.text);
+    await _controller.saveUsername(username, widget.isGuest);
+
     Navigator.pop(context);
   }
 
@@ -165,6 +192,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       ),
                       decoration: const InputDecoration(border: InputBorder.none, counterText: ''),
                       onSubmitted: (value) {
+                        final error = UsernameValidator.validate(value);
+                        if (error != null) {
+                          _showError(error);
+                          return;
+                        }
                         _saveUsername(value);
                         setState(() => _isEditing = false);
                       },
