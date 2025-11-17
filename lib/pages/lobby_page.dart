@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
+import '../services/shared_prefs_service.dart';
 import '../widgets/buttons/exit_button.dart';
 
 class LobbyPage extends StatefulWidget {
@@ -20,14 +20,16 @@ class LobbyPage extends StatefulWidget {
 }
 
 class LobbyPageState extends State<LobbyPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late Timer _timer;
-  int _seconds = 42;
+  int _seconds = 20;
   late AnimationController _gradientController;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    SharedPrefsService().setLobbyStatus(true);
     _gradientController =
     AnimationController(vsync: this, duration: const Duration(seconds: 3))
       ..repeat(reverse: true);
@@ -37,16 +39,32 @@ class LobbyPageState extends State<LobbyPage>
         setState(() => _seconds--);
       } else {
         _timer.cancel();
-        // TODO: handle timeout or match found
       }
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    SharedPrefsService().setLobbyStatus(false);
     _timer.cancel();
     _gradientController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // App is being backgrounded or closed
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.inactive) {
+      SharedPrefsService().setLobbyStatus(false);
+    }
+    // App returns to foreground
+    else if (state == AppLifecycleState.resumed) {
+      SharedPrefsService().setLobbyStatus(true);
+    }
   }
 
   String _formatTime(int seconds) {
@@ -205,7 +223,7 @@ class LobbyPageState extends State<LobbyPage>
                                 );
                               },
                             ),
-                            _buildPlayer('???', 'assets/icons/app_icon.png', Colors.blue),
+                            _buildPlayer('???', 'assets/images/persons/person_in_question.png', Colors.blue),
                           ],
                         ),
                 
@@ -286,7 +304,6 @@ class LobbyPageState extends State<LobbyPage>
             ),
             ExitButton(
               onPressed: () {
-                debugPrint('-----------@@@@@@@@Exit Lobby Pressed');
                 Navigator.pop(context);
               }
             ),
