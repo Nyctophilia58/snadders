@@ -6,6 +6,7 @@ import 'package:snadders/services/iap_services.dart';
 import 'package:snadders/widgets/fetch_app_version.dart';
 import '../game/board_selection.dart';
 import '../providers/board_provider.dart';
+import '../services/in_app_review_services.dart';
 import '../widgets/audio_manager.dart';
 import '../widgets/buttons/exit_button.dart';
 import 'package:snadders/providers/audio_provider.dart';
@@ -110,23 +111,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.thumb_up),
+                icon: const Icon(Icons.thumb_up_alt),
                 iconSize: 26,
-                onPressed: () async {
-                  await controller.rateUs(context);
+                onPressed: () {
+                  InAppReviewService().rateUs(context);
                 },
               ),
-
               const SizedBox(width: 20),
-
               ExitButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
-
               const SizedBox(width: 20),
-
               IconButton(
                 icon: const Icon(Icons.share),
                 iconSize: 26,
@@ -140,7 +137,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ),
             ],
           ),
-
         ],
       ),
     );
