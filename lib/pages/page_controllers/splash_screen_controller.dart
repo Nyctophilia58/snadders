@@ -81,6 +81,7 @@ class SplashScreenController {
         await _prefsService.setAllAdsRemoved(data['allAdsRemoved'] ?? false);
         await _prefsService.setRewardedAdsRemoved(data['rewardedAdsRemoved'] ?? false);
         await _prefsService.setRated(data['hasRated'] ?? false);
+        await _prefsService.setLobbyStatus(data['isInLobby'] ?? false);
 
         // Boards unlocked
         final boardsUnlocked = List<int>.from(data['boardsUnlocked'] ?? [0, 1, 2]);

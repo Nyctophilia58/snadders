@@ -56,7 +56,9 @@ class SignInPageController {
           rewardedAdsRemoved: data['rewardedAdsRemoved'],
           boardsUnlocked: List<int>.from(data['boardsUnlocked']),
           hasRated: data['hasRated'],
-          profileImage: data['profileImage'], isDeleted: false,
+          profileImage: data['profileImage'],
+          isDeleted: false,
+          isInLobby: data['isInLobby'],
         );
         ActiveStatusWrapper.updateUser(userId: docId, isGuest: false);
         return username;
@@ -82,6 +84,7 @@ class SignInPageController {
       'boardsUnlocked': defaultBoards,
       'hasRated': false,
       'profileImage': defaultProfileImage,
+      'isInLobby': false,
     });
 
     final docId = docRef.id;
@@ -98,6 +101,7 @@ class SignInPageController {
       hasRated: false,
       profileImage: defaultProfileImage,
       isDeleted: false,
+      isInLobby: false,
     );
     ActiveStatusWrapper.updateUser(userId: docId, isGuest: false);
     return username;
@@ -129,6 +133,7 @@ class SignInPageController {
       'boardsUnlocked': defaultBoards,
       'hasRated': false,
       'profileImage': defaultProfileImage,
+      'isInLobby': false,
     });
 
     final docId = docRef.id;
@@ -146,6 +151,7 @@ class SignInPageController {
       hasRated: false,
       profileImage: defaultProfileImage,
       isDeleted: true,
+      isInLobby: false,
     );
 
     return username;
@@ -164,6 +170,7 @@ class SignInPageController {
     required bool hasRated,
     required String profileImage,
     required bool isDeleted,
+    required bool isInLobby,
   }) async {
     await _prefsService.saveUserId(docId);
     await _prefsService.saveUsername(username, isGuest: isGuest);
@@ -174,6 +181,7 @@ class SignInPageController {
     await _prefsService.setRated(hasRated);
     await _prefsService.saveProfileImage(profileImage);
     await _prefsService.setAccountDeleted(isDeleted);
+    await _prefsService.setLobbyStatus(isInLobby);
 
     for (int i = 0; i < boardsUnlocked.length; i++) {
       bool unlocked = boardsUnlocked.contains(i);

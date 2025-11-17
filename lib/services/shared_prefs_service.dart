@@ -16,6 +16,7 @@ class SharedPrefsService {
   static const String _userIdKey = 'userId';
   static const String _soundEnabledKey = 'sound_enabled';
   static const String _selectedBoardKey = 'selected_board';
+  static const String _lobbyKey = 'isInLobby';
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
   static const int defaultCoins = 500;
@@ -350,5 +351,18 @@ class SharedPrefsService {
   Future<bool> getAccountDeleted() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('accountDeleted') ?? false;
+  }
+
+  // Set lobby status
+  Future<void> setLobbyStatus(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_lobbyKey, value);
+    await _updateFirestoreField('isInLobby', value);
+  }
+
+  // Get lobby status
+  Future<bool?> getLobbyStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_lobbyKey);
   }
 }
