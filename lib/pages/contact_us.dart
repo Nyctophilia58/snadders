@@ -301,7 +301,7 @@ class ContactUsState extends State<ContactUs> {
               ),
             ),
           ),
-
+          const SizedBox(height: 10),
           ExitButton(
             onPressed: () {
               Navigator.of(context).pop();
