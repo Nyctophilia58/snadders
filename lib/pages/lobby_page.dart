@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/shared_prefs_service.dart';
 import '../widgets/buttons/exit_button.dart';
@@ -25,11 +26,18 @@ class LobbyPageState extends State<LobbyPage>
   int _seconds = 20;
   late AnimationController _gradientController;
 
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late String _userId;
+  StreamSubscription<QuerySnapshot>? _lobbySubscription;
+  bool _opponentFound = false;
+  Map<String, dynamic>? _opponentData;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    SharedPrefsService().setLobbyStatus(true);
+    _enterLobby();
+
     _gradientController =
     AnimationController(vsync: this, duration: const Duration(seconds: 3))
       ..repeat(reverse: true);
@@ -43,10 +51,35 @@ class LobbyPageState extends State<LobbyPage>
     });
   }
 
+  void _enterLobby() async {
+    await SharedPrefsService().setLobbyStatus(true);
+    _userId = await SharedPrefsService().getUserId() ?? '';
+    _lobbySubscription = _firestore
+        .collection('googleUsers')
+        .where('isInLobby', isEqualTo: true)
+        .snapshots()
+        .listen((snapshot) {
+      for (var doc in snapshot.docs) {
+        if (doc.id != _userId && doc['coins'] >= widget.stakeCoins) {
+          setState(() {
+            _opponentFound = true;
+            _opponentData = doc.data();
+          });
+          break;
+        }
+      }
+    });
+  }
+
+  void _leaveLobby() async {
+    await SharedPrefsService().setLobbyStatus(false);
+    await _lobbySubscription?.cancel();
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    SharedPrefsService().setLobbyStatus(false);
+    _leaveLobby();
     _timer.cancel();
     _gradientController.dispose();
     super.dispose();
@@ -59,11 +92,11 @@ class LobbyPageState extends State<LobbyPage>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.inactive) {
-      SharedPrefsService().setLobbyStatus(false);
+      _leaveLobby();
     }
     // App returns to foreground
     else if (state == AppLifecycleState.resumed) {
-      SharedPrefsService().setLobbyStatus(true);
+      _enterLobby();
     }
   }
 
@@ -153,7 +186,7 @@ class LobbyPageState extends State<LobbyPage>
                             ),
                           ],
                         ),
-                
+
                         // Real Time Label
                         Container(
                           padding:
@@ -173,9 +206,9 @@ class LobbyPageState extends State<LobbyPage>
                             ),
                           ),
                         ),
-                
+
                         const SizedBox(height: 10),
-                
+
                         Text(
                           'Entry Amount: ${widget.stakeCoins}',
                           style: TextStyle(
@@ -185,7 +218,7 @@ class LobbyPageState extends State<LobbyPage>
                           ),
                         ),
                         const SizedBox(height: 50),
-                
+
                         // Players Row
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -223,12 +256,20 @@ class LobbyPageState extends State<LobbyPage>
                                 );
                               },
                             ),
-                            _buildPlayer('???', 'assets/images/persons/person_in_question.png', Colors.blue),
+                            _opponentFound && _opponentData != null
+                                ? _buildPlayer(
+                                _opponentData!['username'],
+                                _opponentData!['profileImage'],
+                                Colors.blue)
+                                : _buildPlayer(
+                                '???',
+                                'assets/images/persons/person_in_question.png',
+                                Colors.grey),
                           ],
                         ),
-                
+
                         const SizedBox(height: 10),
-                
+
                         // Timer
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -259,13 +300,27 @@ class LobbyPageState extends State<LobbyPage>
                             ],
                           ),
                         ),
-                
+
                         const SizedBox(height: 25),
-                
+
                         // Searching bar
-                        Container(
-                          padding:
-                          const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                        _opponentFound
+                            ? Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.greenAccent.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Opponent found! Start the game.',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        )
+                            : Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 22, vertical: 10),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(15),
@@ -280,10 +335,11 @@ class LobbyPageState extends State<LobbyPage>
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.green.shade700),
+                                  AlwaysStoppedAnimation<Color>(
+                                      Colors.green.shade700),
                                 ),
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Text(
                                 'Searching for player...',
                                 style: TextStyle(
