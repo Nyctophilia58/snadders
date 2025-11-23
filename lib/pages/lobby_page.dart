@@ -1,16 +1,20 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../game/play_online.dart';
+import '../services/iap_services.dart';
 import '../services/shared_prefs_service.dart';
 import '../widgets/buttons/exit_button.dart';
 
 class LobbyPage extends StatefulWidget {
+  final IAPService iapService;
   final String username;
   final int stakeCoins;
   final String imagePath;
 
   const LobbyPage({
     super.key,
+    required this.iapService,
     required this.username,
     required this.stakeCoins,
     required this.imagePath,
@@ -23,6 +27,7 @@ class LobbyPage extends StatefulWidget {
 class LobbyPageState extends State<LobbyPage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late Timer _timer;
+  late int _coins;
   int _seconds = 20;
   late AnimationController _gradientController;
 
@@ -35,18 +40,27 @@ class LobbyPageState extends State<LobbyPage>
   @override
   void initState() {
     super.initState();
+    _coins = widget.iapService.coinsNotifier.value;
     WidgetsBinding.instance.addObserver(this);
-    _enterLobby();
-
     _gradientController =
     AnimationController(vsync: this, duration: const Duration(seconds: 3))
       ..repeat(reverse: true);
+    _startTimer();
+    _enterLobby();
+  }
 
+  void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_seconds > 0) {
         setState(() => _seconds--);
       } else {
+        _lobbySubscription?.cancel();
         _timer.cancel();
+        setState(() {
+          if (!_opponentFound) {
+            _opponentData = null;
+          }
+        });
       }
     });
   }
@@ -54,13 +68,26 @@ class LobbyPageState extends State<LobbyPage>
   void _enterLobby() async {
     await SharedPrefsService().setLobbyStatus(true);
     _userId = await SharedPrefsService().getUserId() ?? '';
+
+    setState(() {
+      _opponentFound = false;
+      _opponentData = null;
+    });
+
+    if (_seconds <= 0) return;
+    _lobbySubscription?.cancel();
+
     _lobbySubscription = _firestore
         .collection('googleUsers')
         .where('isInLobby', isEqualTo: true)
-        .snapshots()
-        .listen((snapshot) {
+        .where('coins', isGreaterThanOrEqualTo: widget.stakeCoins)
+        .snapshots(includeMetadataChanges: true)
+        .listen((snapshot) async {
+      if (_seconds <= 0) return;
+      if (snapshot.docs.isEmpty) return;
+
       for (var doc in snapshot.docs) {
-        if (doc.id != _userId && doc['coins'] >= widget.stakeCoins) {
+        if (doc.id != _userId && !doc.metadata.isFromCache) {
           setState(() {
             _opponentFound = true;
             _opponentData = doc.data();
@@ -68,10 +95,44 @@ class LobbyPageState extends State<LobbyPage>
           break;
         }
       }
+      
+      if (_opponentFound) {
+        _timer.cancel();
+        _lobbySubscription?.cancel();
+
+        setState(() {
+          _coins = _coins;
+          // _coins -= widget.stakeCoins;
+        });
+        await SharedPrefsService().saveCoins(_coins);
+        widget.iapService.coinsNotifier.value = _coins;
+
+        // Redirect to GamePage
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PlayOnline(
+                username: widget.username,
+                opponentUsername: _opponentData!['username'],
+                userImagePath: widget.imagePath,
+                opponentImagePath: _opponentData!['profileImage'],
+                coins: _coins,
+                diamonds: widget.iapService.diamondsNotifier.value,
+                allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
+              ),
+            ),
+          );
+        }
+      }
     });
   }
 
   void _leaveLobby() async {
+    setState(() {
+      _opponentData = null;
+      _opponentFound = false;
+    });
     await SharedPrefsService().setLobbyStatus(false);
     await _lobbySubscription?.cancel();
   }
@@ -88,15 +149,13 @@ class LobbyPageState extends State<LobbyPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // App is being backgrounded or closed
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.inactive) {
       _leaveLobby();
-    }
-    // App returns to foreground
-    else if (state == AppLifecycleState.resumed) {
+    } else if (state == AppLifecycleState.resumed) {
       _enterLobby();
+      _startTimer();
     }
   }
 
@@ -326,30 +385,7 @@ class LobbyPageState extends State<LobbyPage>
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(color: Colors.white24),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor:
-                                  AlwaysStoppedAnimation<Color>(
-                                      Colors.green.shade700),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                'Searching for player...',
-                                style: TextStyle(
-                                  color: Colors.yellow.shade500,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ],
-                          ),
+                          child: _seconds > 0 ? _buildSearchingIndicator() : _buildNoPlayersFound(),
                         ),
                         const SizedBox(height: 15),
                       ],
@@ -359,10 +395,10 @@ class LobbyPageState extends State<LobbyPage>
               ),
             ),
             ExitButton(
-              onPressed: () {
-                Navigator.pop(context);
-              }
-            ),
+                onPressed: () {
+                  _leaveLobby();
+                  Navigator.pop(context);
+                }),
           ],
         ),
       ),
@@ -398,9 +434,7 @@ class LobbyPageState extends State<LobbyPage>
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          constraints: const BoxConstraints(
-            maxWidth: 100, // limit width to avoid overflow
-          ),
+          constraints: const BoxConstraints(maxWidth: 100),
           decoration: BoxDecoration(
             color: Colors.greenAccent,
             borderRadius: BorderRadius.circular(10),
@@ -419,6 +453,41 @@ class LobbyPageState extends State<LobbyPage>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSearchingIndicator() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+          ),
+        ),
+        const SizedBox(width: 10),
+        const Text(
+          'Searching for players...',
+          style: TextStyle(
+            color: Colors.purple,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoPlayersFound() {
+    return const Text(
+      'No players found.',
+      style: TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
+      ),
     );
   }
 }

@@ -484,6 +484,7 @@ class _HomePageState extends State<HomePage>
         context: context,
         barrierColor: Colors.black38,
         builder: (context) => LobbyPage(
+          iapService: iapService,
           username: controller.username,
           stakeCoins: selectedCoins,
           imagePath: controller.profileImagePath,
