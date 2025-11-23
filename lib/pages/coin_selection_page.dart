@@ -22,12 +22,27 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
   int get displayedCoins => LobbyCoinValues.entryFees[currentIndex];
   int get displayedDiamonds => LobbyCoinValues.diamonds[currentIndex];
 
+  @override
+  void initState() {
+    super.initState();
+
+    // Auto-adjust initial index to the highest lobby user can afford
+    for (int i = 0; i < LobbyCoinValues.entryFees.length; i++) {
+      if (widget.coins >= LobbyCoinValues.entryFees[i]) {
+        currentIndex = i;
+      }
+    }
+  }
+
+  /// Prevent scrolling beyond user's actual balance
   void _incrementValues() {
-    if (currentIndex < LobbyCoinValues.entryFees.length - 1) {
+    if (currentIndex < LobbyCoinValues.entryFees.length - 1 &&
+        widget.coins >= LobbyCoinValues.entryFees[currentIndex + 1]) {
       setState(() => currentIndex++);
     }
   }
 
+  /// Allow decrement without restriction
   void _decrementValues() {
     if (currentIndex > 0) {
       setState(() => currentIndex--);
@@ -40,6 +55,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Top coins & diamonds display
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18),
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -79,6 +95,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
               ],
             ),
           ),
+
           Card(
             color: Colors.transparent,
             elevation: 10,
@@ -138,6 +155,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Left button
                       if (currentIndex > 0)
                         IconButton(
                           onPressed: _decrementValues,
@@ -181,6 +199,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                                 size: 28,
                               ),
                               const SizedBox(height: 8),
+
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 28, vertical: 8),
@@ -207,6 +226,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                                 ),
                               ),
                               const SizedBox(height: 10),
+
                               Text(
                                 'Entry: $displayedCoins',
                                 style: TextStyle(
@@ -221,7 +241,10 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                         ),
                       ),
 
-                      if (currentIndex < LobbyCoinValues.entryFees.length - 1)
+                      // Right button
+                      if (currentIndex < LobbyCoinValues.entryFees.length - 1 &&
+                          widget.coins >=
+                              LobbyCoinValues.entryFees[currentIndex + 1])
                         IconButton(
                           onPressed: _incrementValues,
                           icon: Icon(
@@ -237,11 +260,24 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
 
                   const SizedBox(height: 35),
 
-                  // Play Button
+                  // Play button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        if (widget.coins < displayedCoins) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "You don't have enough coins for this lobby.",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+
                         Navigator.pop(context, displayedCoins);
                       },
                       style: ElevatedButton.styleFrom(
@@ -270,8 +306,9 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
               ),
             ),
           ),
+
           const SizedBox(height: 20),
-          // Exit Button at Bottom
+
           ExitButton(
             onPressed: () => Navigator.pop(context),
           ),
