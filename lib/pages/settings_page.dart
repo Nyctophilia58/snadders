@@ -86,8 +86,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     }
                   ),
 
-                  _buildOption("Notifications", controller.openNotifications),
-
                   _buildOption(
                     "Troubleshoot",
                     () {
