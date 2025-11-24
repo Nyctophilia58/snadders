@@ -2,25 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:snadders/widgets/buttons/exit_button.dart';
 import '../constants/lobby_coin_values.dart';
 
-class CoinSelectionPage extends StatefulWidget {
+class CoinSelectionOnlinePage extends StatefulWidget {
   final int coins;
   final int diamonds;
 
-  const CoinSelectionPage({
+  const CoinSelectionOnlinePage({
     super.key,
     required this.coins,
     required this.diamonds,
   });
 
   @override
-  State<CoinSelectionPage> createState() => _CoinSelectionPageState();
+  State<CoinSelectionOnlinePage> createState() => _CoinSelectionOnlinePageState();
 }
 
-class _CoinSelectionPageState extends State<CoinSelectionPage> {
+class _CoinSelectionOnlinePageState extends State<CoinSelectionOnlinePage> {
   int currentIndex = 0;
 
   int get displayedCoins => LobbyCoinValues.entryFees[currentIndex];
-  int get displayedDiamonds => LobbyCoinValues.diamonds[currentIndex];
+  int get displayedWinValues => LobbyCoinValues.winValues[currentIndex];
 
   @override
   void initState() {
@@ -215,7 +215,7 @@ class _CoinSelectionPageState extends State<CoinSelectionPage> {
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    '$displayedDiamonds',
+                                    '$displayedWinValues',
                                     style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.w900,
