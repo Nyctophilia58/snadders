@@ -12,26 +12,26 @@ void main() {
     });
 
     test('entryFees and diamonds lists have the same length', () {
-      expect(LobbyCoinValues.entryFees.length, LobbyCoinValues.diamonds.length);
+      expect(LobbyCoinValues.entryFees.length, LobbyCoinValues.winValues.length);
     });
 
     test('entryFees and diamonds lists are not empty', () {
       expect(LobbyCoinValues.entryFees.isNotEmpty, true);
-      expect(LobbyCoinValues.diamonds.isNotEmpty, true);
+      expect(LobbyCoinValues.winValues.isNotEmpty, true);
     });
 
     test('entryFees and diamonds lists contain positive values', () {
       for (var fee in LobbyCoinValues.entryFees) {
         expect(fee > 0, true);
       }
-      for (var diamond in LobbyCoinValues.diamonds) {
+      for (var diamond in LobbyCoinValues.winValues) {
         expect(diamond > 0, true);
       }
     });
 
     test('entryFees and diamonds lists have unique values', () {
       expect(LobbyCoinValues.entryFees.length, LobbyCoinValues.entryFees.toSet().length);
-      expect(LobbyCoinValues.diamonds.length, LobbyCoinValues.diamonds.toSet().length);
+      expect(LobbyCoinValues.winValues.length, LobbyCoinValues.winValues.toSet().length);
     });
   });
 }
