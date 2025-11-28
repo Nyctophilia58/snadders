@@ -95,17 +95,50 @@ class LobbyPageState extends State<LobbyPage>
           break;
         }
       }
-      
-      if (_opponentFound) {
+
+      if (_opponentFound && _opponentData != null) {
         _timer.cancel();
+        await SharedPrefsService().setLobbyStatus(false);
         _lobbySubscription?.cancel();
 
-        setState(() {
-          _coins = _coins;
-          // _coins -= widget.stakeCoins;
-        });
+        // Deduct coins
+        _coins = _coins - widget.stakeCoins;
         await SharedPrefsService().saveCoins(_coins);
         widget.iapService.coinsNotifier.value = _coins;
+
+        // --- CREATE MATCH DOCUMENT ---
+        DocumentReference matchRef = await _firestore.collection('matches').add({
+          'player1': {
+            'coins': _coins,
+            'diamonds': widget.iapService.diamondsNotifier.value,
+            'profileImage': widget.imagePath,
+            'index': 1,
+            'uid': _userId,
+            'username': widget.username,
+          },
+          'player2': {
+            'coins': _opponentData!['coins'],
+            'diamonds': _opponentData!['diamonds'] ?? 0,
+            'profileImage': _opponentData!['profileImage'],
+            'index': 2,
+            'uid': _opponentData!['uid'],
+            'username': _opponentData!['username'],
+          },
+          'playerPositions': [0, 0],
+          'status': 'playing',
+          'turnIndex': 1,
+          'boardNumber': 2,
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastMove': {
+            'byIndex': 1,
+            'dice': 0,
+            'from': 0,
+            'to': 0,
+            'timestamp': FieldValue.serverTimestamp(),
+            'type': 'wait',
+          },
+        });
+        final data = await matchRef.get().then((doc) => doc.data() as Map<String, dynamic>);
 
         // Redirect to GamePage
         if (mounted) {
@@ -113,12 +146,8 @@ class LobbyPageState extends State<LobbyPage>
             context,
             MaterialPageRoute(
               builder: (_) => PlayOnline(
-                username: widget.username,
-                opponentUsername: _opponentData!['username'],
-                userImagePath: widget.imagePath,
-                opponentImagePath: _opponentData!['profileImage'],
-                coins: _coins,
-                diamonds: widget.iapService.diamondsNotifier.value,
+                matchId: matchRef.id,
+                data: data,
                 allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
               ),
             ),
@@ -139,6 +168,7 @@ class LobbyPageState extends State<LobbyPage>
 
   @override
   void dispose() {
+    _lobbySubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _leaveLobby();
     _timer.cancel();
@@ -153,6 +183,7 @@ class LobbyPageState extends State<LobbyPage>
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.inactive) {
       _leaveLobby();
+      _timer.cancel();
     } else if (state == AppLifecycleState.resumed) {
       _enterLobby();
       _startTimer();
