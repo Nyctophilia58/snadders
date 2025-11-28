@@ -35,6 +35,7 @@ class LobbyPageState extends State<LobbyPage>
   late String _userId;
   StreamSubscription<QuerySnapshot>? _lobbySubscription;
   bool _opponentFound = false;
+  bool _coinsDeducted = false;
   Map<String, dynamic>? _opponentData;
 
   @override
@@ -54,13 +55,7 @@ class LobbyPageState extends State<LobbyPage>
       if (_seconds > 0) {
         setState(() => _seconds--);
       } else {
-        _lobbySubscription?.cancel();
-        _timer.cancel();
-        setState(() {
-          if (!_opponentFound) {
-            _opponentData = null;
-          }
-        });
+        _cancelLobby();
       }
     });
   }
@@ -72,6 +67,7 @@ class LobbyPageState extends State<LobbyPage>
     setState(() {
       _opponentFound = false;
       _opponentData = null;
+      _coinsDeducted = false;
     });
 
     if (_seconds <= 0) return;
@@ -83,7 +79,7 @@ class LobbyPageState extends State<LobbyPage>
         .where('coins', isGreaterThanOrEqualTo: widget.stakeCoins)
         .snapshots(includeMetadataChanges: true)
         .listen((snapshot) async {
-      if (_seconds <= 0) return;
+      if (_seconds <= 0 || _coinsDeducted) return;
       if (snapshot.docs.isEmpty) return;
 
       for (var doc in snapshot.docs) {
@@ -96,13 +92,15 @@ class LobbyPageState extends State<LobbyPage>
         }
       }
 
-      if (_opponentFound && _opponentData != null) {
+      if (_opponentFound && _opponentData != null && !_coinsDeducted) {
+        _coinsDeducted = true;
         _timer.cancel();
         await SharedPrefsService().setLobbyStatus(false);
         _lobbySubscription?.cancel();
 
         // Deduct coins
-        _coins = _coins - widget.stakeCoins;
+        // _coins = _coins - widget.stakeCoins;
+        _coins = _coins - 100 ;
         await SharedPrefsService().saveCoins(_coins);
         widget.iapService.coinsNotifier.value = _coins;
 
@@ -112,7 +110,7 @@ class LobbyPageState extends State<LobbyPage>
             'coins': _coins,
             'diamonds': widget.iapService.diamondsNotifier.value,
             'profileImage': widget.imagePath,
-            'index': 1,
+            'index': 0,
             'uid': _userId,
             'username': widget.username,
           },
@@ -120,22 +118,21 @@ class LobbyPageState extends State<LobbyPage>
             'coins': _opponentData!['coins'],
             'diamonds': _opponentData!['diamonds'] ?? 0,
             'profileImage': _opponentData!['profileImage'],
-            'index': 2,
+            'index': 1,
             'uid': _opponentData!['uid'],
             'username': _opponentData!['username'],
           },
-          'playerPositions': [0, 0],
+          'playerPositions': [1, 1],
           'status': 'playing',
-          'turnIndex': 1,
-          'boardNumber': 2,
+          'turnIndex': 0,
+          'boardNumber': 1,
           'createdAt': FieldValue.serverTimestamp(),
           'lastMove': {
-            'byIndex': 1,
+            'byIndex': 0,
             'dice': 0,
             'from': 0,
             'to': 0,
             'timestamp': FieldValue.serverTimestamp(),
-            'type': 'wait',
           },
         });
         final data = await matchRef.get().then((doc) => doc.data() as Map<String, dynamic>);
@@ -157,13 +154,18 @@ class LobbyPageState extends State<LobbyPage>
     });
   }
 
-  void _leaveLobby() async {
+  Future<void> _cancelLobby() async {
+    _timer.cancel();
+    await SharedPrefsService().setLobbyStatus(false);
+    await _lobbySubscription?.cancel();
     setState(() {
       _opponentData = null;
       _opponentFound = false;
     });
-    await SharedPrefsService().setLobbyStatus(false);
-    await _lobbySubscription?.cancel();
+  }
+
+  void _leaveLobby() async {
+    _cancelLobby();
   }
 
   @override
