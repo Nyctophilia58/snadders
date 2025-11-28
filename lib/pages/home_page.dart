@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:snadders/pages/coin_selection_page.dart';
+import 'package:snadders/pages/coin_selection_online_page.dart';
 import 'package:snadders/pages/page_controllers/home_page_controller.dart';
 import '../game/board_selection.dart';
 import '../pages/store_page.dart';
@@ -13,6 +13,7 @@ import '../pages/settings_page.dart';
 import '../pages/statistics_page.dart';
 import '../widgets/ad_removal_selection.dart';
 import '../widgets/wheel/wheel.dart';
+import 'coin_selection_friends_page.dart';
 import 'lobby_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -244,7 +245,7 @@ class _HomePageState extends State<HomePage>
             if (!widget.isGuest)
               _buildButton('PLAY ONLINE', Icons.people, _onPlayOnline),
             if (!widget.isGuest)
-              _buildButton('PLAY WITH FRIENDS', Icons.people, () {}),
+              _buildButton('PLAY WITH FRIENDS', Icons.people, _onPlayWithFriends),
             _buildButton('VS COMPUTER', Icons.smart_toy, _onPlayVsComputer),
             _buildButton('PASS N PLAY', Icons.group, _onPassNPlay),
           ],
@@ -474,7 +475,7 @@ class _HomePageState extends State<HomePage>
     final selectedCoins = await showDialog<int>(
       context: context,
       barrierColor: Colors.black38,
-      builder: (context) => CoinSelectionPage(
+      builder: (context) => CoinSelectionOnlinePage(
         coins: iapService.coinsNotifier.value ?? 0,
         diamonds: iapService.diamondsNotifier.value ?? 0,
       ),
@@ -491,6 +492,18 @@ class _HomePageState extends State<HomePage>
         ),
       );
     }
+  }
+
+  void _onPlayWithFriends() async {
+    await showDialog<int>(
+      context: context,
+      barrierColor: Colors.black38,
+      builder: (context) => CoinSelectionFriendsPage(
+        iapService: iapService,
+        coins: iapService.coinsNotifier.value ?? 0,
+        diamonds: iapService.diamondsNotifier.value ?? 0,
+      ),
+    );
   }
 
   void _onPlayVsComputer() async {
