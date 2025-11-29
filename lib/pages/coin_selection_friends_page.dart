@@ -60,24 +60,19 @@ class _CoinSelectionFriendsPageState extends State<CoinSelectionFriendsPage> {
       'player2': {
         'coins': 0,
         'diamonds': 0,
-        'profileImage': 'assets/images/persons/person_in_question.png',
+        'profileImage': '',
         'index': 1,
         'uid': '',
-        'username': 'Test',
+        'username': '',
       },
-      'playerPositions': [0, 0],
+      'playerPositions': [1, 1],
       'status': 'waiting',
       'turnIndex': 0,
       'boardNumber': 1,
+      'currentPlayerIndex': 0,
+      'winner' : null,
       'createdAt': FieldValue.serverTimestamp(),
-      'lastMove': {
-        'byIndex': 0,
-        'dice': 0,
-        'from': 0,
-        'to': 0,
-        'timestamp': FieldValue.serverTimestamp(),
-        'type': 'wait',
-      }
+      'lastMove': null,
     });
 
     setState(() {
@@ -132,8 +127,8 @@ class _CoinSelectionFriendsPageState extends State<CoinSelectionFriendsPage> {
 
     await roomDoc.update({
       'player2': {
-        'coins': 0,
-        'diamonds': 0,
+        'coins': userData['coins'],
+        'diamonds': userData['diamonds'],
         'profileImage': userData['profileImage'],
         'index': 2,
         'uid': userId,
@@ -453,6 +448,8 @@ class _CoinSelectionFriendsPageState extends State<CoinSelectionFriendsPage> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
+          // keyboard vanish
+          FocusScope.of(context).unfocus();
           joinGame(joinController.text.trim());
         },
         style: ElevatedButton.styleFrom(
