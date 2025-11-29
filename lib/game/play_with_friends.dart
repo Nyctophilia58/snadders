@@ -601,6 +601,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                       profileImage: playerImages[0],
                       diceRollTrigger: _diceRollTriggers[0],
                       forcedDiceValue: _forcedDiceValues[0],
+                      myPlayerIndex: myPlayerIndex
                     ),
                     GameUtilsOnline.buildPlayerInfo(
                       playerIndex: 1,
@@ -612,6 +613,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                       profileImage: playerImages[1],
                       diceRollTrigger: _diceRollTriggers[1],
                       forcedDiceValue: _forcedDiceValues[1],
+                      myPlayerIndex: myPlayerIndex
                     ),
                   ],
                 ),

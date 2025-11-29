@@ -64,12 +64,14 @@ class GameUtilsOnline {
     required bool autoRollDice,
     required DiceRollCallback onRolled,
     required String profileImage,
+    required int myPlayerIndex,
     bool isComputer = false,
     // Sync props
     String? diceRollTrigger,
     int? forcedDiceValue,
   }) {
     bool isCurrent = currentPlayerIndex == playerIndex;
+    bool isLocal = playerIndex == myPlayerIndex;
 
     // Dice widget
     Widget diceWidget = Container(
@@ -84,7 +86,7 @@ class GameUtilsOnline {
         onRolled: (dice) => onRolled(playerIndex, dice),
         autoRoll: autoRollDice,
         delay: const Duration(milliseconds: 500),
-        isInteractive: isCurrent,
+        isInteractive: isCurrent && isLocal,
         diceRollTrigger: diceRollTrigger,
         forcedDiceValue: forcedDiceValue,
       ),
