@@ -89,7 +89,10 @@ class FriendsMatchPageState extends State<FriendsMatchPage>
               _opponentData = opponent;
             });
             if (_opponentFound) {
-              data['status'] = 'playing';
+              // update status to playing
+              _firestore.collection('rooms').doc(widget.gameId).update({
+                'status': 'playing',
+              });
               _timer.cancel();
               _roomSub.cancel();
               setState(() {
@@ -107,6 +110,7 @@ class FriendsMatchPageState extends State<FriendsMatchPage>
                         gameId: widget.gameId,
                         allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
                         data: data,
+                        myPlayerIndex: widget.isPlayerOne ? 0 : 1,
                       ),
                   )
                 );
@@ -126,7 +130,6 @@ class FriendsMatchPageState extends State<FriendsMatchPage>
   void dispose() {
     _roomSub.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    _leavePage();
     _timer.cancel();
     _gradientController.dispose();
     super.dispose();
