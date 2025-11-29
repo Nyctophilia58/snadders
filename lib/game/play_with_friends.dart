@@ -220,14 +220,13 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
           .collection('rooms')
           .doc(widget.gameId)
           .update(updates);
-      // Immediately sync local state
       controller.currentPlayerIndex = (playerIndex + 1) % 2;
       _isAnimating = false;
       setState(() {});
       return;
     }
 
-    // Calculate final position (without animation)
+    // Calculate final position (unchanged)
     int finalPos = intermediate;
     final ladders = laddersList[controller.boardNumber - 1];
     final snakes = snakesList[controller.boardNumber - 1];
@@ -237,9 +236,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
       finalPos = snakes[intermediate]!;
     }
 
-    // Prepare and update Firestore immediately
-    Map<String, dynamic> updates = {
-      'playerPositions.$playerIndex': finalPos,
+    // Update Firestore IMMEDIATELY for positions and lastMove (for remote sync/animation trigger)
+    // But DELAY currentPlayerIndex/winner until after local anim
+    Map<String, dynamic> initialUpdates = {
+      'playerPositions.$playerIndex': finalPos,  // Remote sees final pos immediately
       'lastMove': {
         'player': playerIndex,
         'dice': dice,
@@ -249,30 +249,15 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
         'timestamp': DateTime.now().toIso8601String(),
       },
     };
-    if (finalPos != 100) {
-      updates['currentPlayerIndex'] = (playerIndex + 1) % 2;
-    } else {
-      updates['winner'] = playerNames[playerIndex];
-    }
     await _firestore
         .collection('rooms')
         .doc(widget.gameId)
-        .update(updates);
+        .update(initialUpdates);
 
-    // Immediately sync local non-position state
-    if (finalPos != 100) {
-      controller.currentPlayerIndex = (playerIndex + 1) % 2;
-    } else {
-      controller.winner = playerNames[playerIndex];
-    }
-
-    // Now animate locally (position still at oldPosition, listener skips sync due to _isAnimating)
-    // Animate hops to intermediate
+    // Animate locally (unchanged)
     for (int pos = oldPosition + 1; pos <= intermediate; pos++) {
       await _animateTokenHop(playerIndex, pos);
     }
-
-    // Animate snake or ladder if applicable
     if (finalPos != intermediate) {
       if (finalPos > intermediate) {
         await _animateLadder(playerIndex, intermediate, finalPos);
@@ -281,11 +266,33 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
       }
     }
 
-    // Final position already set during last animation step
+    // NOW switch turn/winner AFTER animation (local + Firestore)
+    Map<String, dynamic> turnUpdates = {};
+    if (finalPos == 100) {
+      turnUpdates['winner'] = playerNames[playerIndex];
+      controller.winner = playerNames[playerIndex];
+      _winnerAnimationController.forward();
+      GameUtilsOnline.showWinnerDialog(
+        context: context,
+        winnerName: playerNames[playerIndex],
+        onPlayAgain: _resetGame,
+        allAdsRemoved: widget.allAdsRemoved,
+      );
+    } else {
+      int nextIndex = (playerIndex + 1) % 2;
+      turnUpdates['currentPlayerIndex'] = nextIndex;
+      controller.currentPlayerIndex = nextIndex;
+    }
+    if (turnUpdates.isNotEmpty) {
+      await _firestore
+          .collection('rooms')
+          .doc(widget.gameId)
+          .update(turnUpdates);
+    }
+
     _isAnimating = false;
     setState(() {});
   }
-
   Future<void> _animateTokenHop(int index, int targetPosition) async {
     await AudioManager.instance.playSFX('audios/jump-6293.mp3');
     final animCtrl = _tokenControllers[index];

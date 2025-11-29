@@ -90,10 +90,6 @@ class GameUtilsOnline {
       ),
     );
 
-    // // Row children - UPDATED: Always add dice in position, regardless of isCurrent
-    // List<Widget> rowChildren = [];
-    // if (playerIndex == 1 || playerIndex == 2) rowChildren.add(diceWidget);
-
     // show dice for current player only
     List<Widget> rowChildren = [];
     if (isCurrent) {
