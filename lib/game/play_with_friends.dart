@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
@@ -12,10 +14,17 @@ import 'game_utils_online.dart';
 
 class PlayWithFriends extends StatefulWidget {
   final String gameId;
-  final bool allAdsRemoved ;
+  final bool allAdsRemoved;
   final Map<String, dynamic> data;
+  final int myPlayerIndex;
 
-  const PlayWithFriends({super.key, required this.gameId, required this.allAdsRemoved, required this.data});
+  const PlayWithFriends({
+    super.key,
+    required this.gameId,
+    required this.allAdsRemoved,
+    required this.data,
+    required this.myPlayerIndex
+  });
 
   @override
   State<PlayWithFriends> createState() => _PlayWithFriendsState();
@@ -25,6 +34,8 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   late GameController controller;
   late AnimationController _winnerAnimationController;
   late Animation<double> _winnerAnimation;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final List<Color> playerColors = [Colors.green, Colors.red];
   final List<String> colorNames = ['green', 'red'];
@@ -37,8 +48,11 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   late List<Animation<double>> _tokenRotations;
   late List<AnimationController> _tokenIdleControllers;
 
+  late StreamSubscription _gameSub;
+  DateTime? _lastMoveTimestamp;
   late int boardNumber = widget.data['boardNumber'];
   bool _isAnimating = false;
+  late int myPlayerIndex = widget.myPlayerIndex;
 
   @override
   void initState() {
@@ -48,6 +62,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
       boardNumber: boardNumber,
       playerNames: playerNames,
     );
+    // Initialize from passed data
+    controller.playerPositions = List<int>.from(widget.data['playerPositions'] ?? [1, 1]);
+    controller.currentPlayerIndex = widget.data['currentPlayerIndex'] ?? 0;
+
     _winnerAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -72,10 +90,64 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     }
 
     AdBannerService.loadBannerAd();
+
+    // Listen for real-time game updates
+    _gameSub = _firestore
+        .collection('rooms')
+        .doc(widget.gameId)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists && mounted) {
+        final data = snapshot.data()!;
+        // Sync winner
+        final String? newWinner = data['winner'];
+        if (newWinner != null && controller.winner == null) {
+          controller.winner = newWinner;
+          _winnerAnimationController.forward();
+          GameUtilsOnline.showWinnerDialog(
+            context: context,
+            winnerName: newWinner,
+            onPlayAgain: _resetGame,
+            allAdsRemoved: widget.allAdsRemoved,
+          );
+        }
+        // Always sync current player
+        final int newCurrentIndex = data['currentPlayerIndex'] ?? 0;
+        controller.currentPlayerIndex = newCurrentIndex;
+        // Handle moves
+        final Map<String, dynamic>? lastMove = data['lastMove'];
+        if (lastMove != null && lastMove['timestamp'] != null) {
+          final String tsStr = lastMove['timestamp'];
+          final DateTime ts = DateTime.parse(tsStr);
+          final bool isNewMove = _lastMoveTimestamp == null || ts.isAfter(_lastMoveTimestamp!);
+          if (isNewMove) {
+            _lastMoveTimestamp = ts;
+            final int mover = lastMove['player'];
+            if (mover != myPlayerIndex) {
+              // Opponent move: set to from to start animation from correct position
+              final int from = lastMove['from'];
+              controller.playerPositions[mover] = from;
+              setState(() {});
+              // Trigger animation
+              _animateOpponentMove(lastMove);
+            } else {
+              // Own move: no action needed (local animation already in progress or completed)
+            }
+          }
+        } else {
+          // No lastMove: safe to sync positions (initial load, reset, or turn switch without move)
+          if (!_isAnimating) {
+            controller.playerPositions = List<int>.from(data['playerPositions'] ?? [1, 1]);
+          }
+        }
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
+    _gameSub.cancel();
     for (var c in _tokenControllers) {
       c.dispose();
     }
@@ -86,55 +158,116 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     super.dispose();
   }
 
+  Future<void> _animateOpponentMove(Map<String, dynamic> move) async {
+    if (_isAnimating) return;
+    _isAnimating = true;
+    final int index = move['player'];
+    final int from = move['from'];
+    final int intermediate = move['intermediate'];
+    final int to = move['to'];
+
+    // Position already set to from in listener
+
+    // Animate hops to intermediate
+    for (int pos = from + 1; pos <= intermediate; pos++) {
+      await _animateTokenHop(index, pos);
+    }
+
+    // Animate snake or ladder if applicable
+    if (to != intermediate) {
+      if (to > intermediate) {
+        await _animateLadder(index, intermediate, to);
+      } else if (to < intermediate) {
+        await _animateSnake(index, intermediate, to);
+      }
+    }
+
+    // Ensure final position
+    controller.playerPositions[index] = to;
+    _isAnimating = false;
+    setState(() {});
+  }
+
   void _handleDiceRoll(int playerIndex, int dice) async {
-    if (_isAnimating || controller.winner != null || controller.currentPlayerIndex != playerIndex) return;
+    if (_isAnimating ||
+        controller.winner != null ||
+        controller.currentPlayerIndex != playerIndex ||
+        playerIndex != myPlayerIndex) {
+      return;
+    }
 
     _isAnimating = true;
     int oldPosition = controller.playerPositions[playerIndex];
-    int newPosition = oldPosition + dice;
+    int intermediate = oldPosition + dice;
 
-    if (newPosition > 100) {
+    if (intermediate > 100) {
+      final Map<String, dynamic> updates = {'currentPlayerIndex': (playerIndex + 1) % 2};
+      await _firestore
+          .collection('rooms')
+          .doc(widget.gameId)
+          .update(updates);
+      // Immediately sync local state
       controller.currentPlayerIndex = (playerIndex + 1) % 2;
       _isAnimating = false;
       setState(() {});
       return;
     }
 
-    // Per-square hop animation
-    for (int pos = oldPosition + 1; pos <= newPosition; pos++) {
+    // Calculate final position (without animation)
+    int finalPos = intermediate;
+    final ladders = laddersList[controller.boardNumber - 1];
+    final snakes = snakesList[controller.boardNumber - 1];
+    if (ladders.containsKey(intermediate)) {
+      finalPos = ladders[intermediate]!;
+    } else if (snakes.containsKey(intermediate)) {
+      finalPos = snakes[intermediate]!;
+    }
+
+    // Prepare and update Firestore immediately
+    Map<String, dynamic> updates = {
+      'playerPositions.$playerIndex': finalPos,
+      'lastMove': {
+        'player': playerIndex,
+        'dice': dice,
+        'from': oldPosition,
+        'intermediate': intermediate,
+        'to': finalPos,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    };
+    if (finalPos != 100) {
+      updates['currentPlayerIndex'] = (playerIndex + 1) % 2;
+    } else {
+      updates['winner'] = playerNames[playerIndex];
+    }
+    await _firestore
+        .collection('rooms')
+        .doc(widget.gameId)
+        .update(updates);
+
+    // Immediately sync local non-position state
+    if (finalPos != 100) {
+      controller.currentPlayerIndex = (playerIndex + 1) % 2;
+    } else {
+      controller.winner = playerNames[playerIndex];
+    }
+
+    // Now animate locally (position still at oldPosition, listener skips sync due to _isAnimating)
+    // Animate hops to intermediate
+    for (int pos = oldPosition + 1; pos <= intermediate; pos++) {
       await _animateTokenHop(playerIndex, pos);
     }
 
-    // Handle ladder/snake
-    final ladders = laddersList[controller.boardNumber - 1];
-    final snakes = snakesList[controller.boardNumber - 1];
-
-    if (ladders.containsKey(newPosition)) {
-      int end = ladders[newPosition]!;
-      await _animateLadder(playerIndex, newPosition, end);
-      controller.playerPositions[playerIndex] = end;
-    } else if (snakes.containsKey(newPosition)) {
-      int end = snakes[newPosition]!;
-      await _animateSnake(playerIndex, newPosition, end);
-      controller.playerPositions[playerIndex] = end;
-    } else {
-      controller.playerPositions[playerIndex] = newPosition;
+    // Animate snake or ladder if applicable
+    if (finalPos != intermediate) {
+      if (finalPos > intermediate) {
+        await _animateLadder(playerIndex, intermediate, finalPos);
+      } else {
+        await _animateSnake(playerIndex, intermediate, finalPos);
+      }
     }
 
-    // Check winner
-    if (controller.playerPositions[playerIndex] == 100) {
-      controller.winner = controller.playerNames[playerIndex];
-      _winnerAnimationController.forward();
-      GameUtilsOnline.showWinnerDialog(
-        context: context,
-        winnerName: controller.winner!,
-        onPlayAgain: _resetGame,
-        allAdsRemoved: widget.allAdsRemoved,
-      );
-    } else {
-      controller.currentPlayerIndex = (playerIndex + 1) % 2;
-    }
-
+    // Final position already set during last animation step
     _isAnimating = false;
     setState(() {});
   }
@@ -176,7 +309,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
 
     void listener() {
       final double t = animCtrl.value;
-      final double verticalOffset = 4 * hopHeight * t * (t - 1); // Fixed: arc upwards like hop
+      final double verticalOffset = 4 * hopHeight * t * (t - 1);
       final Offset delta = Offset(
         (endOffset.dx - startOffset.dx) * t,
         (endOffset.dy - startOffset.dy) * t + verticalOffset,
@@ -264,11 +397,12 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     return GameUtilsOnline.getPositionOffset(position, cellWidth, cellHeight, boardPadding);
   }
 
-  void _resetGame() {
-    // Reset game controller
+  void _resetGame() async {
+    // Reset local state
     controller.reset();
     _winnerAnimationController.reset();
     _isAnimating = false;
+    _lastMoveTimestamp = null;
 
     // Reset token animations
     for (int i = 0; i < _tokenControllers.length; i++) {
@@ -277,6 +411,14 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
       _tokenRotations[i] = AlwaysStoppedAnimation(0.0);
       _tokenIdleControllers[i].forward(); // Restart idle bob
     }
+
+    // Reset Firestore game state
+    await _firestore.collection('rooms').doc(widget.gameId).update({
+      'playerPositions': [1, 1],
+      'currentPlayerIndex': 0,
+      'winner': null,
+      'lastMove': null,
+    });
 
     setState(() {});
   }
@@ -438,9 +580,9 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                       label: widget.data['player2']['username'],
                       color: Colors.red,
                       currentPlayerIndex: controller.currentPlayerIndex,
-                      autoRollDice: true,
+                      autoRollDice: false,
                       onRolled: _handleDiceRoll,
-                      isComputer: true,
+                      isComputer: false,
                       profileImage: playerImages[1],
                     ),
                   ],
