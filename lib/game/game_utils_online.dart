@@ -65,6 +65,9 @@ class GameUtilsOnline {
     required DiceRollCallback onRolled,
     required String profileImage,
     bool isComputer = false,
+    // Sync props
+    String? diceRollTrigger,
+    int? forcedDiceValue,
   }) {
     bool isCurrent = currentPlayerIndex == playerIndex;
 
@@ -79,14 +82,23 @@ class GameUtilsOnline {
       ),
       child: DiceRoller(
         onRolled: (dice) => onRolled(playerIndex, dice),
-        autoRoll: isComputer && isCurrent,
+        autoRoll: autoRollDice,
         delay: const Duration(milliseconds: 500),
+        isInteractive: isCurrent,
+        diceRollTrigger: diceRollTrigger,
+        forcedDiceValue: forcedDiceValue,
       ),
     );
 
-    // Row children
+    // // Row children - UPDATED: Always add dice in position, regardless of isCurrent
+    // List<Widget> rowChildren = [];
+    // if (playerIndex == 1 || playerIndex == 2) rowChildren.add(diceWidget);
+
+    // show dice for current player only
     List<Widget> rowChildren = [];
-    if (isCurrent && (playerIndex == 1 || playerIndex == 2)) rowChildren.add(diceWidget);
+    if (isCurrent) {
+      if (playerIndex == 1 || playerIndex == 2) rowChildren.add(diceWidget);
+    }
 
     // Replace location icon with profile image
     rowChildren.add(Container(
@@ -104,7 +116,9 @@ class GameUtilsOnline {
       ),
     ));
 
-    if (isCurrent && (playerIndex == 0 || playerIndex == 3)) rowChildren.add(diceWidget);
+    if (isCurrent) {
+      if (playerIndex == 0 || playerIndex == 3) rowChildren.add(diceWidget);
+    }
 
     return Column(
       crossAxisAlignment: (playerIndex == 1 || playerIndex == 2)
