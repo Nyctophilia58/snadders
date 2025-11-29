@@ -26,16 +26,22 @@ class BoardsTab extends StatelessWidget {
             imagePath: boardImages[index],
             isLocked: !unlockedBoards[index],
             iapService: iapService,
-            productId: 'board_$index',
+            productId: 'board.$index',
           );
         });
+
+        int totalUnlocked = unlockedBoards.where((isUnlocked) => isUnlocked).length;
+        int remainingBoards = boardImages.length - totalUnlocked;
+        int bundlePriceValue = 40 * remainingBoards;
+        String bundlePrice = "BDT $bundlePriceValue";
 
         // Show the bundle card only if not all boards are unlocked
         if (!unlockedBoardsSet.containsAll(List.generate(8, (i) => i))) {
           boardCards.add(
             BundleBoardCard(
-              price: "BDT 200",
+              price: bundlePrice,
               iapService: iapService,
+              productId: iapService.getBoardsBundleProductId(remainingBoards),
             ),
           );
         }

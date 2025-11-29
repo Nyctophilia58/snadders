@@ -46,7 +46,7 @@ class _AdRemovalSelectionDialogState extends State<AdRemovalSelectionDialog> {
     }
 
     // Trigger purchase
-    await widget.iapService.purchaseNonConsumable(productId);
+    await widget.iapService.purchaseConsumable(productId);
   }
 
   @override

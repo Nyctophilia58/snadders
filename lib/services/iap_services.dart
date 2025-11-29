@@ -22,12 +22,11 @@ class IAPService {
   static const String _diamonds6400Id = 'diamonds6400';
 
   // Bundle IDs
-  static const String _bundleOfferId = 'bundle_coins_and_diamonds';
-  static const String _bundleBoardsId = "bundle_board";
+  static const String _bundleOfferId = 'bundle_offer';
 
   // Non-consumable product IDs
-  static const String _removeAllAdsId = 'all_ads';
-  static const String _removeRewardedAdsId = 'rewarded_ads';
+  static const String _removeAllAdsId = 'remove_all';
+  static const String _removeRewardedAdsId = 'remove_rewarded';
 
   // Getters for Consumable coin product IDs
   static String get coins10kId => _coins10kId;
@@ -47,11 +46,16 @@ class IAPService {
 
   // Getter for Bundle offer ID
   static String get bundleOfferId => _bundleOfferId;
-  static String get bundleBoardsId => _bundleBoardsId;
 
   // Getters for Non-consumable product IDs
   static String get removeAllAdsId => _removeAllAdsId;
   static String get removeRewardedAdsId => _removeRewardedAdsId;
+
+  // Returns a dynamic product ID for bundle boards
+  String getBoardsBundleProductId(int remainingBoards) {
+    // Example: bundle_board_5 means 5 boards are still locked
+    return 'bundle_board_$remainingBoards';
+  }
 
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
@@ -206,7 +210,7 @@ class IAPService {
         }
 
         // Bundle Boards (Non-consumable)
-        if (purchase.productID == bundleBoardsId) {
+        if (purchase.productID.startsWith('bundle_board_')) {
           Set<int> allBoards = {};
           for (int i = 0; i < 8; i++) {
             await _prefsService.saveBoardUnlocked(i, true);
@@ -217,7 +221,7 @@ class IAPService {
 
         // Board unlocks
         if (purchase.productID.startsWith('board')) {
-          final index = int.parse(purchase.productID.split('_')[1]);
+          final index = int.parse(purchase.productID.split('.')[1]);
           await _prefsService.saveBoardUnlocked(index, true);
           unlockedBoardsNotifier.value = {...unlockedBoardsNotifier.value, index};
         }

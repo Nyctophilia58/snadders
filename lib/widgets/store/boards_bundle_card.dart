@@ -4,11 +4,13 @@ import 'package:snadders/services/iap_services.dart';
 class BundleBoardCard extends StatelessWidget {
   final String price;
   final IAPService iapService;
+  final String productId;
 
   const BundleBoardCard({
     super.key,
     required this.price,
     required this.iapService,
+    required this.productId,
   });
 
   @override
@@ -43,7 +45,7 @@ class BundleBoardCard extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       onPressed: () async {
-                        await iapService.purchaseNonConsumable(IAPService.bundleBoardsId);
+                        await iapService.purchaseNonConsumable(productId);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
