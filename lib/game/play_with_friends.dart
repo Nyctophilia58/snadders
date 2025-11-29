@@ -54,6 +54,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   bool _isAnimating = false;
   late int myPlayerIndex = widget.myPlayerIndex;
 
+  // Dice sync state
+  late List<String?> _diceRollTriggers;
+  late List<int?> _forcedDiceValues;
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +92,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     for (var ctrl in _tokenIdleControllers) {
       ctrl.repeat(reverse: true);
     }
+
+    // Dice sync init
+    _diceRollTriggers = List<String?>.filled(2, null);
+    _forcedDiceValues = List<int?>.filled(2, null);
 
     AdBannerService.loadBannerAd();
 
@@ -124,14 +132,20 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
             _lastMoveTimestamp = ts;
             final int mover = lastMove['player'];
             if (mover != myPlayerIndex) {
-              // Opponent move: set to from to start animation from correct position
+              // Opponent move: sync dice + delay token anim
               final int from = lastMove['from'];
               controller.playerPositions[mover] = from;
-              setState(() {});
-              // Trigger animation
-              _animateOpponentMove(lastMove);
+              _forcedDiceValues[mover] = lastMove['dice'];
+              _diceRollTriggers[mover] = DateTime.now().millisecondsSinceEpoch.toString();
+              setState(() {});  // Triggers dice roll anim + position reset
+              // Delay token anim to sync with dice duration
+              Future.delayed(const Duration(milliseconds: 1000), () {
+                if (mounted) {
+                  _animateOpponentMove(lastMove);
+                }
+              });
             } else {
-              // Own move: no action needed (local animation already in progress or completed)
+              // Own move: already handled locally
             }
           }
         } else {
@@ -404,6 +418,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     _isAnimating = false;
     _lastMoveTimestamp = null;
 
+    // Reset dice sync state
+    _diceRollTriggers = List<String?>.filled(2, null);
+    _forcedDiceValues = List<int?>.filled(2, null);
+
     // Reset token animations
     for (int i = 0; i < _tokenControllers.length; i++) {
       _tokenControllers[i].reset();
@@ -568,22 +586,25 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                   children: [
                     GameUtilsOnline.buildPlayerInfo(
                       playerIndex: 0,
-                      label: widget.data['player1']['username'],
+                      label: playerNames[0],
                       color: Colors.green,
                       currentPlayerIndex: controller.currentPlayerIndex,
                       autoRollDice: false,
                       onRolled: _handleDiceRoll,
                       profileImage: playerImages[0],
+                      diceRollTrigger: _diceRollTriggers[0],
+                      forcedDiceValue: _forcedDiceValues[0],
                     ),
                     GameUtilsOnline.buildPlayerInfo(
                       playerIndex: 1,
-                      label: widget.data['player2']['username'],
+                      label: playerNames[1],
                       color: Colors.red,
                       currentPlayerIndex: controller.currentPlayerIndex,
                       autoRollDice: false,
                       onRolled: _handleDiceRoll,
-                      isComputer: false,
                       profileImage: playerImages[1],
+                      diceRollTrigger: _diceRollTriggers[1],
+                      forcedDiceValue: _forcedDiceValues[1],
                     ),
                   ],
                 ),
