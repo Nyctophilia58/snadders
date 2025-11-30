@@ -59,6 +59,9 @@ class SignInPageController {
           profileImage: data['profileImage'],
           isDeleted: false,
           isInLobby: data['isInLobby'],
+          gamesPlayed: data['gamesPlayed'],
+          gamesWon: data['gamesWon'],
+          winRate: data['winRate'],
         );
         ActiveStatusWrapper.updateUser(userId: docId, isGuest: false);
         return username;
@@ -85,6 +88,9 @@ class SignInPageController {
       'hasRated': false,
       'profileImage': defaultProfileImage,
       'isInLobby': false,
+      'gamesPlayed': 0,
+      'gamesWon': 0,
+      'winRate': 0.0,
     });
 
     final docId = docRef.id;
@@ -102,6 +108,9 @@ class SignInPageController {
       profileImage: defaultProfileImage,
       isDeleted: false,
       isInLobby: false,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      winRate: 0.0,
     );
     ActiveStatusWrapper.updateUser(userId: docId, isGuest: false);
     return username;
@@ -134,6 +143,9 @@ class SignInPageController {
       'hasRated': false,
       'profileImage': defaultProfileImage,
       'isInLobby': false,
+      'gamesPlayed': 0,
+      'gamesWon': 0,
+      'winRate': 0.0,
     });
 
     final docId = docRef.id;
@@ -152,6 +164,9 @@ class SignInPageController {
       profileImage: defaultProfileImage,
       isDeleted: true,
       isInLobby: false,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      winRate: 0.0,
     );
 
     return username;
@@ -171,6 +186,9 @@ class SignInPageController {
     required String profileImage,
     required bool isDeleted,
     required bool isInLobby,
+    required int gamesPlayed,
+    required int gamesWon,
+    required double winRate,
   }) async {
     await _prefsService.saveUserId(docId);
     await _prefsService.saveUsername(username, isGuest: isGuest);
@@ -182,6 +200,9 @@ class SignInPageController {
     await _prefsService.saveProfileImage(profileImage);
     await _prefsService.setAccountDeleted(isDeleted);
     await _prefsService.setLobbyStatus(isInLobby);
+    await _prefsService.saveGamesPlayed(gamesPlayed);
+    await _prefsService.saveGamesWon(gamesWon);
+    await _prefsService.saveWinRate(winRate);
 
     for (int i = 0; i < boardsUnlocked.length; i++) {
       bool unlocked = boardsUnlocked.contains(i);

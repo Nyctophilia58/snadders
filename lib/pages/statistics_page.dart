@@ -25,6 +25,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
   late String _selectedProfileImage = '';
   bool _isEditing = false;
 
+  int _gamesPlayed = 0;
+  int _gamesWon = 0;
+  double _winRate = 0.0;
+  bool _isLoadingStats = true;
+
   final List<String> _profileImages = List.generate(
     56,
     (index) => 'assets/images/persons/${(index + 1).toString().padLeft(2, '0')}.png',
@@ -45,6 +50,26 @@ class _StatisticsPageState extends State<StatisticsPage> {
     _usernameController = TextEditingController(text: widget.username);
     _usernameFocusNode = FocusNode();
     _initProfileImage();
+    _loadGameStats();
+  }
+
+  Future<void> _loadGameStats() async {
+    try {
+      final stats = await _controller.loadGameStats();
+      if (mounted) {
+        setState(() {
+          _gamesPlayed = stats['gamesPlayed'] ?? 0;
+          _gamesWon = stats['gamesWon'] ?? 0;
+          _winRate = stats['winRate'] ?? 0.0;
+          _isLoadingStats = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading game stats: $e');
+      if (mounted) {
+        setState(() => _isLoadingStats = false);
+      }
+    }
   }
 
   void _initProfileImage() async {
@@ -222,34 +247,37 @@ class _StatisticsPageState extends State<StatisticsPage> {
               Container(
                 decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.all(12),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Your Game Statistics", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                    SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Games Played:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
-                        Text("0", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
-                      ],
-                    ),
-                    SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Games Won:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
-                        Text("0", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
-                      ],
-                    ),
-                    SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Win Rate:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
-                        Text("0%", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
-                      ],
-                    ),
+                    const Text("Your Game Statistics", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+                    const SizedBox(height: 12),
+                    if (_isLoadingStats)
+                      const Center(child: CircularProgressIndicator())
+                    else ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Games Played:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
+                          Text("$_gamesPlayed", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Games Won:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
+                          Text("$_gamesWon", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Win Rate:", style: TextStyle(fontSize: 14, color: Colors.deepPurpleAccent)),
+                          Text("${(_winRate * 100).toStringAsFixed(1)}%", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent)),                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -17,6 +17,9 @@ class SharedPrefsService {
   static const String _soundEnabledKey = 'sound_enabled';
   static const String _selectedBoardKey = 'selected_board';
   static const String _lobbyKey = 'isInLobby';
+  static const String _gamesPlayedKey = 'gamesPlayed';
+  static const String _gamesWonKey = 'gamesWon';
+  static const String _winRateKey = 'winRate';
 
   static const String defaultProfileImage = 'assets/images/persons/01.png';
   static const int defaultCoins = 500;
@@ -197,6 +200,7 @@ class SharedPrefsService {
       for (int i = 0; i < boardImages.length; i++) {
         await prefs.remove('$_boardKeyPrefix$i');
       }
+      await prefs.remove(_lobbyKey);
     } catch (e) {
       print('Error clearing data: $e');
     }
@@ -364,5 +368,73 @@ class SharedPrefsService {
   Future<bool?> getLobbyStatus() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_lobbyKey);
+  }
+
+  Future<int> loadGamesPlayed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(_gamesPlayedKey) ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> loadGamesWon() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(_gamesWonKey) ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<double> loadWinRate() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getDouble(_winRateKey) ?? 0.0;
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  Future<void> saveGamesPlayed(int gamesPlayed) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_gamesPlayedKey, gamesPlayed);
+      await _updateFirestoreField('gamesPlayed', gamesPlayed);
+    } catch (e) {
+      print('Error saving games played: $e');
+    }
+  }
+
+  Future<void> saveGamesWon(int gamesWon) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_gamesWonKey, gamesWon);
+      await _updateFirestoreField('gamesWon', gamesWon);
+    } catch (e) {
+      print('Error saving games won: $e');
+    }
+  }
+
+  Future<void> saveWinRate(double winRate) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_winRateKey, winRate);
+      await _updateFirestoreField('winRate', winRate);
+    } catch (e) {
+      print('Error saving win rate: $e');
+    }
+  }
+
+  Future<double> calculateWinRate() async {
+    try {
+      final gamesPlayed = await loadGamesPlayed();
+      final gamesWon = await loadGamesWon();
+      if (gamesPlayed == 0) return 0.0;
+      return (gamesWon / gamesPlayed) * 100;
+    } catch (e) {
+      return 0.0;
+    }
   }
 }

@@ -3,6 +3,15 @@ import '../../services/shared_prefs_service.dart';
 class StatisticsPageController {
   final SharedPrefsService _prefsService = SharedPrefsService();
 
+  /// Load game statistics: games played, games won, win rate
+  Future<Map<String, dynamic>> loadGameStats() async {
+    return {
+      'gamesPlayed': await _prefsService.loadGamesPlayed(),
+      'gamesWon': await _prefsService.loadGamesWon(),
+      'winRate': await _prefsService.loadWinRate(),
+    };
+  }
+
   /// Load saved profile image or default first image
   Future<String> loadProfileImage(List<String> defaultImages) async {
     final saved = await _prefsService.loadProfileImage();

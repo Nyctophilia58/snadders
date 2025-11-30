@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/shared_prefs_service.dart';
 import '../widgets/dice_roller.dart';
 import '../services/ad_services/ad_banner_service.dart';
 import '../services/ad_services/ad_interstitial_service.dart';
@@ -144,6 +145,8 @@ class GameUtilsOnline {
   static void showWinnerDialog({
     required BuildContext context,
     required String winnerName,
+    required String winnerUid,
+    required SharedPrefsService service,
     required VoidCallback onPlayAgain,
     required VoidCallback onExit,
     required bool allAdsRemoved,
@@ -221,10 +224,19 @@ class GameUtilsOnline {
                             ),
                             icon: const Icon(Icons.exit_to_app, color: Colors.white),
                             label: const Text("Exit", style: TextStyle(color: Colors.white)),
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.pop(context);
                               audioPlayer.stop();
                               onExit();
+                              await service.saveGamesPlayed(await service.loadGamesPlayed() + 1);
+                              await service.saveGamesWon(
+                                winnerUid == await service.loadUserId()
+                                    ? await service.loadGamesWon() + 1
+                                    : await service.loadGamesWon(),
+                              );
+                              await service.saveWinRate(
+                                await service.calculateWinRate(),
+                              );
                               if (!allAdsRemoved) {
                                 AdInterstitialService.showInterstitialAd();
                               }

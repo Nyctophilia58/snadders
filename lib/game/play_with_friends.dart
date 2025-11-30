@@ -7,6 +7,7 @@ import 'package:lottie/lottie.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import 'package:snadders/services/ad_services/ad_banner_service.dart';
 import '../services/ad_services/ad_interstitial_service.dart';
+import '../services/shared_prefs_service.dart';
 import '../widgets/audio_manager.dart';
 import '../widgets/buttons/exit_button.dart';
 import 'data/ladders_data.dart';
@@ -37,11 +38,13 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   late Animation<double> _winnerAnimation;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SharedPrefsService _prefsService = SharedPrefsService();
 
   final List<Color> playerColors = [Colors.green, Colors.red];
   final List<String> colorNames = ['green', 'red'];
   late List<String> playerNames = [widget.data['player1']['username'], widget.data['player2']['username']];
   late List<String> playerImages = [widget.data['player1']['profileImage'], widget.data['player2']['profileImage']];
+  late List<String> playerUids = [widget.data['player1']['uid'], widget.data['player2']['uid']];
 
   // Animation controllers for each token
   late List<AnimationController> _tokenControllers;
@@ -118,6 +121,8 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
             GameUtilsOnline.showWinnerDialog(
               context: context,
               winnerName: newWinner,
+              winnerUid: playerUids[playerNames.indexOf(newWinner)],
+              service: _prefsService,
               onPlayAgain: _resetGame,
               onExit: _exitGame,
               allAdsRemoved: widget.allAdsRemoved,
@@ -306,11 +311,14 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     Map<String, dynamic> turnUpdates = {};
     if (finalPos == 100) {
       turnUpdates['winner'] = playerNames[playerIndex];
+      String winnerUid = playerUids[playerIndex];
       controller.winner = playerNames[playerIndex];
       _winnerAnimationController.forward();
       GameUtilsOnline.showWinnerDialog(
         context: context,
         winnerName: playerNames[playerIndex],
+        winnerUid: winnerUid,
+        service: _prefsService,
         onPlayAgain: _resetGame,
         onExit: _exitGame,
         allAdsRemoved: widget.allAdsRemoved,
