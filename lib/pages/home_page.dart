@@ -268,7 +268,7 @@ class _HomePageState extends State<HomePage>
             builder: (context) => Dialog(
               backgroundColor: Colors.transparent,
               insetPadding: const EdgeInsets.all(16),
-              child: SettingsPage(username: widget.username, iapService: iapService),
+              child: SettingsPage(username: widget.username, iapService: iapService, isGuest: widget.isGuest),
             ),
           );
         }),

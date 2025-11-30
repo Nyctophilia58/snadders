@@ -17,7 +17,8 @@ import 'package:share_plus/share_plus.dart';
 class SettingsPage extends ConsumerStatefulWidget {
   final String username;
   final IAPService iapService;
-  const SettingsPage({super.key, required this.iapService, required this.username});
+  final bool isGuest;
+  const SettingsPage({super.key, required this.iapService, required this.username, required this.isGuest});
 
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
@@ -72,8 +73,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   // Audio toggle using Riverpod
                   _buildAudioToggle(),
 
-                  // Board selector button
-                  _buildBoardSelectorButton(),
+                  // if not guest, show board selector
+                  if (!widget.isGuest)
+                    _buildBoardSelectorButton(),
 
                   // Store option
                   _buildOption("Store", () => controller.openStore(context, widget.iapService)),
