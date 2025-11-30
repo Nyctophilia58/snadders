@@ -8,6 +8,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:lottie/lottie.dart';
 
 typedef DiceRollCallback = void Function(int playerIndex, int dice);
+typedef VoidCallback = void Function();
 
 class GameUtilsOnline {
   /// Handles dice roll, snakes/ladders, winner check
@@ -144,6 +145,7 @@ class GameUtilsOnline {
     required BuildContext context,
     required String winnerName,
     required VoidCallback onPlayAgain,
+    required VoidCallback onExit,
     required bool allAdsRemoved,
   }) {
     final AudioPlayer audioPlayer = AudioPlayer();
@@ -221,8 +223,8 @@ class GameUtilsOnline {
                             label: const Text("Exit", style: TextStyle(color: Colors.white)),
                             onPressed: () {
                               Navigator.pop(context);
-                              Navigator.pop(context);
                               audioPlayer.stop();
+                              onExit();
                               if (!allAdsRemoved) {
                                 AdInterstitialService.showInterstitialAd();
                               }

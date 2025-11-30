@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import 'package:snadders/services/ad_services/ad_banner_service.dart';
+import '../services/ad_services/ad_interstitial_service.dart';
 import '../widgets/audio_manager.dart';
 import '../widgets/buttons/exit_button.dart';
 import 'data/ladders_data.dart';
@@ -53,6 +54,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   late int boardNumber = widget.data['boardNumber'];
   bool _isAnimating = false;
   late int myPlayerIndex = widget.myPlayerIndex;
+  bool _isExiting = false;
 
   // Dice sync state
   late List<String?> _diceRollTriggers;
@@ -105,58 +107,92 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
         .doc(widget.gameId)
         .snapshots()
         .listen((snapshot) {
-      if (snapshot.exists && mounted) {
-        final data = snapshot.data()!;
-        // Sync winner
-        final String? newWinner = data['winner'];
-        if (newWinner != null && controller.winner == null) {
-          controller.winner = newWinner;
-          _winnerAnimationController.forward();
-          GameUtilsOnline.showWinnerDialog(
-            context: context,
-            winnerName: newWinner,
-            onPlayAgain: _resetGame,
-            allAdsRemoved: widget.allAdsRemoved,
-          );
-        }
-        // Always sync current player
-        final int newCurrentIndex = data['currentPlayerIndex'] ?? 0;
-        controller.currentPlayerIndex = newCurrentIndex;
-        // Handle moves
-        final Map<String, dynamic>? lastMove = data['lastMove'];
-        if (lastMove != null && lastMove['timestamp'] != null) {
-          final String tsStr = lastMove['timestamp'];
-          final DateTime ts = DateTime.parse(tsStr);
-          final bool isNewMove = _lastMoveTimestamp == null || ts.isAfter(_lastMoveTimestamp!);
-          if (isNewMove) {
-            _lastMoveTimestamp = ts;
-            final int mover = lastMove['player'];
-            if (mover != myPlayerIndex) {
-              // Opponent move: sync dice + delay token anim
-              final int from = lastMove['from'];
-              controller.playerPositions[mover] = from;
-              _forcedDiceValues[mover] = lastMove['dice'];
-              _diceRollTriggers[mover] = DateTime.now().millisecondsSinceEpoch.toString();
-              setState(() {});  // Triggers dice roll anim + position reset
-              // Delay token anim to sync with dice duration
-              Future.delayed(const Duration(milliseconds: 1000), () {
-                if (mounted) {
-                  _animateOpponentMove(lastMove);
-                }
-              });
-            } else {
-              // Own move: already handled locally
+      if (mounted) {
+        if (snapshot.exists) {
+          final data = snapshot.data()!;
+          // Sync winner
+          final String? newWinner = data['winner'];
+          if (newWinner != null && controller.winner == null) {
+            controller.winner = newWinner;
+            _winnerAnimationController.forward();
+            GameUtilsOnline.showWinnerDialog(
+              context: context,
+              winnerName: newWinner,
+              onPlayAgain: _resetGame,
+              onExit: _exitGame,
+              allAdsRemoved: widget.allAdsRemoved,
+            );
+          }
+          // Always sync current player
+          final int newCurrentIndex = data['currentPlayerIndex'] ?? 0;
+          controller.currentPlayerIndex = newCurrentIndex;
+          // Handle moves
+          final Map<String, dynamic>? lastMove = data['lastMove'];
+          if (lastMove != null && lastMove['timestamp'] != null) {
+            final String tsStr = lastMove['timestamp'];
+            final DateTime ts = DateTime.parse(tsStr);
+            final bool isNewMove = _lastMoveTimestamp == null || ts.isAfter(_lastMoveTimestamp!);
+            if (isNewMove) {
+              _lastMoveTimestamp = ts;
+              final int mover = lastMove['player'];
+              if (mover != myPlayerIndex) {
+                // Opponent move: sync dice + delay token anim
+                final int from = lastMove['from'];
+                controller.playerPositions[mover] = from;
+                _forcedDiceValues[mover] = lastMove['dice'];
+                _diceRollTriggers[mover] = DateTime.now().millisecondsSinceEpoch.toString();
+                setState(() {});  // Triggers dice roll anim + position reset
+                // Delay token anim to sync with dice duration
+                Future.delayed(const Duration(milliseconds: 1000), () {
+                  if (mounted) {
+                    _animateOpponentMove(lastMove);
+                  }
+                });
+              } else {
+                // Own move: already handled locally
+              }
+            }
+          } else {
+            // No lastMove: safe to sync positions (initial load, reset, or turn switch without move)
+            if (!_isAnimating) {
+              controller.playerPositions = List<int>.from(data['playerPositions'] ?? [1, 1]);
             }
           }
-        } else {
-          // No lastMove: safe to sync positions (initial load, reset, or turn switch without move)
-          if (!_isAnimating) {
-            controller.playerPositions = List<int>.from(data['playerPositions'] ?? [1, 1]);
-          }
+          setState(() {});
+        } else if (!_isExiting) {
+          _showGameEndedDialog();
         }
-        setState(() {});
       }
     });
+  }
+
+  void _showGameEndedDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("Game Ended"),
+        content: const Text("Your opponent has left the game."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _exitGame();
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exitGame() async {
+    if (_isExiting) return;
+    _isExiting = true;
+    await _firestore.collection('rooms').doc(widget.gameId).delete();
+    if (mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   @override
@@ -276,6 +312,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
         context: context,
         winnerName: playerNames[playerIndex],
         onPlayAgain: _resetGame,
+        onExit: _exitGame,
         allAdsRemoved: widget.allAdsRemoved,
       );
     } else {
@@ -293,6 +330,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     _isAnimating = false;
     setState(() {});
   }
+
   Future<void> _animateTokenHop(int index, int targetPosition) async {
     await AudioManager.instance.playSFX('audios/jump-6293.mp3');
     final animCtrl = _tokenControllers[index];
@@ -599,9 +637,9 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                       autoRollDice: false,
                       onRolled: _handleDiceRoll,
                       profileImage: playerImages[0],
+                      myPlayerIndex: myPlayerIndex,
                       diceRollTrigger: _diceRollTriggers[0],
                       forcedDiceValue: _forcedDiceValues[0],
-                      myPlayerIndex: myPlayerIndex
                     ),
                     GameUtilsOnline.buildPlayerInfo(
                       playerIndex: 1,
@@ -611,9 +649,9 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                       autoRollDice: false,
                       onRolled: _handleDiceRoll,
                       profileImage: playerImages[1],
+                      myPlayerIndex: myPlayerIndex,
                       diceRollTrigger: _diceRollTriggers[1],
                       forcedDiceValue: _forcedDiceValues[1],
-                      myPlayerIndex: myPlayerIndex
                     ),
                   ],
                 ),
@@ -637,7 +675,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                             TextButton(
                               onPressed: () {
                                 Navigator.of(context).pop();
-                                Navigator.of(context).pop();
+                                _exitGame();
+                                if (!widget.allAdsRemoved) {
+                                  AdInterstitialService.showInterstitialAd();
+                                }
                               },
                               child: const Text("Exit", style: TextStyle(color: Colors.red)),
                             ),
