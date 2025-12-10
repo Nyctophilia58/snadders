@@ -4,14 +4,12 @@ import '../../services/iap_services.dart';
 class BundleOfferCard extends StatelessWidget {
   final String title;
   final String price;
-  final VoidCallback? onBuy;
   final IAPService iapService;
 
   const BundleOfferCard({
     super.key,
     this.title = 'Bundle Offer',
     this.price = 'BDT 750',
-    this.onBuy,
     required this.iapService,
   });
 
@@ -54,9 +52,9 @@ class BundleOfferCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: onBuy ??
+              onPressed:
                 () async{
-                  await iapService.purchaseNonConsumable(IAPService.bundleOfferId);
+                  await iapService.purchaseConsumable(IAPService.bundleOfferId);
                 },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,

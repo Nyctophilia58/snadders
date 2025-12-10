@@ -22,7 +22,7 @@ class IAPService {
   static const String _diamonds6400Id = 'diamonds6400';
 
   // Bundle IDs
-  static const String _bundleOfferId = 'bundle_offer';
+  static const String _bundleOfferId = 'offer_bundle';
 
   // Non-consumable product IDs
   static const String _removeAllAdsId = 'remove_all';
