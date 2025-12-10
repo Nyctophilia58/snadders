@@ -111,6 +111,7 @@ class FriendsMatchPageState extends State<FriendsMatchPage>
                         allAdsRemoved: widget.iapService.allAdsRemovedNotifier.value,
                         data: data,
                         myPlayerIndex: widget.isPlayerOne ? 0 : 1,
+                        iapService: widget.iapService,
                       ),
                   )
                 );

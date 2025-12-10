@@ -7,6 +7,7 @@ import 'package:lottie/lottie.dart';
 import 'package:snadders/game/controllers/game_controller.dart';
 import 'package:snadders/services/ad_services/ad_banner_service.dart';
 import '../services/ad_services/ad_interstitial_service.dart';
+import '../services/iap_services.dart';
 import '../services/shared_prefs_service.dart';
 import '../widgets/audio_manager.dart';
 import '../widgets/buttons/exit_button.dart';
@@ -19,13 +20,15 @@ class PlayWithFriends extends StatefulWidget {
   final bool allAdsRemoved;
   final Map<String, dynamic> data;
   final int myPlayerIndex;
+  final IAPService iapService;
 
   const PlayWithFriends({
     super.key,
     required this.gameId,
     required this.allAdsRemoved,
     required this.data,
-    required this.myPlayerIndex
+    required this.myPlayerIndex,
+    required this.iapService,
   });
 
   @override
@@ -42,9 +45,11 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
 
   final List<Color> playerColors = [Colors.green, Colors.red];
   final List<String> colorNames = ['green', 'red'];
-  late List<String> playerNames = [widget.data['player1']['username'], widget.data['player2']['username']];
-  late List<String> playerImages = [widget.data['player1']['profileImage'], widget.data['player2']['profileImage']];
-  late List<String> playerUids = [widget.data['player1']['uid'], widget.data['player2']['uid']];
+
+  // initialize late fields that depend on widget data in initState
+  late List<String> playerNames;
+  late List<String> playerImages;
+  late List<String> playerUids;
 
   // Animation controllers for each token
   late List<AnimationController> _tokenControllers;
@@ -54,26 +59,54 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
 
   late StreamSubscription _gameSub;
   DateTime? _lastMoveTimestamp;
-  late int boardNumber = widget.data['boardNumber'];
+  late int boardNumber;
   bool _isAnimating = false;
-  late int myPlayerIndex = widget.myPlayerIndex;
+  late int myPlayerIndex;
   bool _isExiting = false;
 
   // Dice sync state
   late List<String?> _diceRollTriggers;
   late List<int?> _forcedDiceValues;
 
+  // Undo state
+  bool _canUndo = false;
+  Timer? _undoTimer;
+  Map<String, dynamic>? _lastOwnMove;
+  late int _diamonds;
+  late Map<String, int> _undosUsed;
+
   @override
   void initState() {
     super.initState();
+
+    // initialize values that depend on widget
+    playerNames = [
+      widget.data['player1']?['username']?.toString() ?? 'Player 1',
+      widget.data['player2']?['username']?.toString() ?? 'Player 2',
+    ];
+    playerImages = [
+      widget.data['player1']?['profileImage']?.toString() ?? '',
+      widget.data['player2']?['profileImage']?.toString() ?? '',
+    ];
+    playerUids = [
+      widget.data['player1']?['uid']?.toString() ?? '',
+      widget.data['player2']?['uid']?.toString() ?? '',
+    ];
+
+    boardNumber = widget.data['boardNumber'] ?? 1;
+    myPlayerIndex = widget.myPlayerIndex;
+
     controller = GameController(
       totalPlayers: 2,
       boardNumber: boardNumber,
       playerNames: playerNames,
     );
+
     // Initialize from passed data
     controller.playerPositions = List<int>.from(widget.data['playerPositions'] ?? [1, 1]);
     controller.currentPlayerIndex = widget.data['currentPlayerIndex'] ?? 0;
+
+    _undosUsed = Map<String, int>.from(widget.data['undosUsed']?.map((k, v) => MapEntry(k.toString(), v as int)) ?? {'0': 0, '1': 0});
 
     _winnerAnimationController = AnimationController(
       vsync: this,
@@ -102,6 +135,8 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     _diceRollTriggers = List<String?>.filled(2, null);
     _forcedDiceValues = List<int?>.filled(2, null);
 
+    _loadDiamonds();
+
     AdBannerService.loadBannerAd();
 
     // Listen for real-time game updates
@@ -114,51 +149,85 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
         if (snapshot.exists) {
           final data = snapshot.data()!;
           // Sync winner
-          final String? newWinner = data['winner'];
+          final String? newWinner = (data['winner'] is String) ? data['winner'] as String : null;
           if (newWinner != null && controller.winner == null) {
             controller.winner = newWinner;
             _winnerAnimationController.forward();
+            _canUndo = false;
+            _undoTimer?.cancel();
+
+            // safe winner UID lookup
+            int winnerIndex = playerNames.indexOf(newWinner);
+            String winnerUid = (winnerIndex >= 0 && winnerIndex < playerUids.length) ? playerUids[winnerIndex] : '';
+
             GameUtilsOnline.showWinnerDialog(
               context: context,
               winnerName: newWinner,
-              winnerUid: playerUids[playerNames.indexOf(newWinner)],
+              winnerUid: winnerUid,
               service: _prefsService,
               onPlayAgain: _resetGame,
               onExit: _exitGame,
               allAdsRemoved: widget.allAdsRemoved,
             );
           }
+
           // Always sync current player
           final int newCurrentIndex = data['currentPlayerIndex'] ?? 0;
           controller.currentPlayerIndex = newCurrentIndex;
+
+          // Sync undos used
+          final undosData = data['undosUsed'];
+          if (undosData != null) {
+            _undosUsed = Map<String, int>.from(undosData.map((k, v) => MapEntry(k.toString(), v as int)));
+          }
+
           // Handle moves
-          final Map<String, dynamic>? lastMove = data['lastMove'];
+          final Map<String, dynamic>? lastMove = (data['lastMove'] is Map) ? Map<String, dynamic>.from(data['lastMove']) : null;
           if (lastMove != null && lastMove['timestamp'] != null) {
-            final String tsStr = lastMove['timestamp'];
-            final DateTime ts = DateTime.parse(tsStr);
+            final String tsStr = lastMove['timestamp'].toString();
+            DateTime ts;
+            try {
+              ts = DateTime.parse(tsStr);
+            } catch (_) {
+              ts = DateTime.now();
+            }
             final bool isNewMove = _lastMoveTimestamp == null || ts.isAfter(_lastMoveTimestamp!);
             if (isNewMove) {
               _lastMoveTimestamp = ts;
-              final int mover = lastMove['player'];
+              final int mover = lastMove['player'] is int ? lastMove['player'] as int : int.parse(lastMove['player'].toString());
               if (mover != myPlayerIndex) {
-                // Opponent move: sync dice + delay token anim
-                final int from = lastMove['from'];
+                // Opponent move
+                final int from = lastMove['from'] is int ? lastMove['from'] as int : int.parse(lastMove['from'].toString());
+                final bool isUndoMove = lastMove['isUndo'] == true;
+
+                // Update position immediately
                 controller.playerPositions[mover] = from;
-                _forcedDiceValues[mover] = lastMove['dice'];
-                _diceRollTriggers[mover] = DateTime.now().millisecondsSinceEpoch.toString();
-                setState(() {});  // Triggers dice roll anim + position reset
-                // Delay token anim to sync with dice duration
-                Future.delayed(const Duration(milliseconds: 1000), () {
+
+                if (!isUndoMove) {
+                  // Normal move: sync dice
+                  _forcedDiceValues[mover] = lastMove['dice'] is int ? lastMove['dice'] as int : int.tryParse(lastMove['dice'].toString());
+                  _diceRollTriggers[mover] = DateTime.now().millisecondsSinceEpoch.toString();
+                  setState(() {}); // triggers dice animation
+                } else {
+                  // Undo move: skip dice animation
+                  _forcedDiceValues[mover] = null;
+                  _diceRollTriggers[mover] = null;
+                  setState(() {}); // token anim only
+                }
+
+                // Delay token anim to sync with dice duration or immediate for undo
+                Future.delayed(isUndoMove ? Duration.zero : const Duration(milliseconds: 1000), () {
                   if (mounted) {
                     _animateOpponentMove(lastMove);
                   }
                 });
-              } else {
-                // Own move: already handled locally
+
+                _canUndo = false;
+                _undoTimer?.cancel();
+                _lastOwnMove = null;
               }
             }
           } else {
-            // No lastMove: safe to sync positions (initial load, reset, or turn switch without move)
             if (!_isAnimating) {
               controller.playerPositions = List<int>.from(data['playerPositions'] ?? [1, 1]);
             }
@@ -169,6 +238,108 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
         }
       }
     });
+  }
+
+  Future<void> _loadDiamonds() async {
+    _diamonds = widget.iapService.diamondsNotifier.value;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _startUndoTimer(Duration duration) {
+    _undoTimer?.cancel();
+    _undoTimer = Timer(duration, () async {
+      if (mounted && _canUndo) {
+        final int playerIndex = controller.currentPlayerIndex;
+        if (playerIndex == myPlayerIndex) {
+          // Switch turn after undo window
+          final int nextIndex = (playerIndex + 1) % 2;
+          await _firestore.collection('rooms').doc(widget.gameId).update({'currentPlayerIndex': nextIndex});
+          controller.currentPlayerIndex = nextIndex;
+        }
+        if (mounted) {
+          setState(() {
+            _canUndo = false;
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _performUndo() async {
+    final String playerKey = myPlayerIndex.toString();
+    final int currentUndos = _undosUsed[playerKey] ?? 0;
+    if (!_canUndo || _diamonds < 1 || _lastOwnMove == null || currentUndos >= 5) {
+      if (_diamonds < 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Not enough diamonds! Undo costs 1 💎.')),
+        );
+      } else if (currentUndos >= 5) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Max 5 undos per game reached!')),
+        );
+      }
+      return;
+    }
+
+    _undoTimer?.cancel();
+    _canUndo = false;
+
+    final move = _lastOwnMove!;
+    final int player = myPlayerIndex;
+    final int from = move['from'] is int ? move['from'] as int : int.parse(move['from'].toString());
+    final int to = controller.playerPositions[player]; // current token position
+
+    try {
+      // Create an "undo move" object for opponent to animate
+      final undoMove = {
+        'player': player,
+        'from': to, // current position
+        'intermediate': to,
+        'to': from, // move back to old position
+        'dice': 0, // special value for undo
+        'isUndo': true,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      // Update Firestore so opponent sees the undo immediately
+      await _firestore.collection('rooms').doc(widget.gameId).update({
+        'playerPositions.$player': from,
+        'lastMove': undoMove,
+        'undosUsed.$playerKey': FieldValue.increment(1),
+      });
+
+      // Local revert
+      controller.playerPositions[player] = from;
+      _lastOwnMove = null;
+
+      // Deduct diamond
+      final int newDiamonds = _diamonds - 1;
+      _diamonds = newDiamonds;
+      widget.iapService.diamondsNotifier.value = _diamonds;
+      await _prefsService.saveDiamonds(newDiamonds);
+
+      // Update local undos
+      _undosUsed[playerKey] = currentUndos + 1;
+
+      // Reset dice for re-roll
+      _diceRollTriggers[player] = null;
+      _forcedDiceValues[player] = null;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Move undone! Roll again. 💎 -1')),
+        );
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Undo failed. Try again.')),
+        );
+      }
+    }
   }
 
   void _showGameEndedDialog() {
@@ -194,6 +365,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   Future<void> _exitGame() async {
     if (_isExiting) return;
     _isExiting = true;
+    _undoTimer?.cancel();
     await _firestore.collection('rooms').doc(widget.gameId).delete();
     if (mounted) {
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -203,6 +375,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   @override
   void dispose() {
     _gameSub.cancel();
+    _undoTimer?.cancel();
     for (var c in _tokenControllers) {
       c.dispose();
     }
@@ -216,12 +389,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   Future<void> _animateOpponentMove(Map<String, dynamic> move) async {
     if (_isAnimating) return;
     _isAnimating = true;
-    final int index = move['player'];
-    final int from = move['from'];
-    final int intermediate = move['intermediate'];
-    final int to = move['to'];
-
-    // Position already set to from in listener
+    final int index = move['player'] is int ? move['player'] as int : int.parse(move['player'].toString());
+    final int from = move['from'] is int ? move['from'] as int : int.parse(move['from'].toString());
+    final int intermediate = move['intermediate'] is int ? move['intermediate'] as int : int.parse(move['intermediate'].toString());
+    final int to = move['to'] is int ? move['to'] as int : int.parse(move['to'].toString());
 
     // Animate hops to intermediate
     for (int pos = from + 1; pos <= intermediate; pos++) {
@@ -257,10 +428,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
 
     if (intermediate > 100) {
       final Map<String, dynamic> updates = {'currentPlayerIndex': (playerIndex + 1) % 2};
-      await _firestore
-          .collection('rooms')
-          .doc(widget.gameId)
-          .update(updates);
+      await _firestore.collection('rooms').doc(widget.gameId).update(updates);
       controller.currentPlayerIndex = (playerIndex + 1) % 2;
       _isAnimating = false;
       setState(() {});
@@ -277,23 +445,23 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
       finalPos = snakes[intermediate]!;
     }
 
+    // Prepare last own move for potential undo
+    _lastOwnMove = {
+      'player': playerIndex,
+      'dice': dice,
+      'from': oldPosition,
+      'intermediate': intermediate,
+      'to': finalPos,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
     // Update Firestore IMMEDIATELY for positions and lastMove (for remote sync/animation trigger)
     // But DELAY currentPlayerIndex/winner until after local anim
     Map<String, dynamic> initialUpdates = {
-      'playerPositions.$playerIndex': finalPos,  // Remote sees final pos immediately
-      'lastMove': {
-        'player': playerIndex,
-        'dice': dice,
-        'from': oldPosition,
-        'intermediate': intermediate,
-        'to': finalPos,
-        'timestamp': DateTime.now().toIso8601String(),
-      },
+      'playerPositions.$playerIndex': finalPos, // Remote sees final pos immediately
+      'lastMove': _lastOwnMove,
     };
-    await _firestore
-        .collection('rooms')
-        .doc(widget.gameId)
-        .update(initialUpdates);
+    await _firestore.collection('rooms').doc(widget.gameId).update(initialUpdates);
 
     // Animate locally (unchanged)
     for (int pos = oldPosition + 1; pos <= intermediate; pos++) {
@@ -307,13 +475,16 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
       }
     }
 
-    // NOW switch turn/winner AFTER animation (local + Firestore)
-    Map<String, dynamic> turnUpdates = {};
+    // NOW handle win or undo window / turn switch AFTER animation (local + Firestore)
     if (finalPos == 100) {
-      turnUpdates['winner'] = playerNames[playerIndex];
-      String winnerUid = playerUids[playerIndex];
+      // Win: no undo
+      Map<String, dynamic> turnUpdates = {
+        'winner': playerNames[playerIndex],
+      };
+      String winnerUid = (playerIndex >= 0 && playerIndex < playerUids.length) ? playerUids[playerIndex] : '';
       controller.winner = playerNames[playerIndex];
       _winnerAnimationController.forward();
+      await _firestore.collection('rooms').doc(widget.gameId).update(turnUpdates);
       GameUtilsOnline.showWinnerDialog(
         context: context,
         winnerName: playerNames[playerIndex],
@@ -323,16 +494,13 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
         onExit: _exitGame,
         allAdsRemoved: widget.allAdsRemoved,
       );
+      _lastOwnMove = null;
     } else {
-      int nextIndex = (playerIndex + 1) % 2;
-      turnUpdates['currentPlayerIndex'] = nextIndex;
-      controller.currentPlayerIndex = nextIndex;
-    }
-    if (turnUpdates.isNotEmpty) {
-      await _firestore
-          .collection('rooms')
-          .doc(widget.gameId)
-          .update(turnUpdates);
+      // Undo window: 5 seconds to decide
+      setState(() {
+        _canUndo = true;
+      });
+      _startUndoTimer(const Duration(seconds: 3));
     }
 
     _isAnimating = false;
@@ -442,6 +610,9 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
   }
 
   Offset _getCellOffset(int position) {
+    // defensive: clamp position into valid board range
+    final int safePosition = (position >= 1 && position <= 100) ? position : 1;
+
     const boardPadding = 2.0;
     final constraints = MediaQuery.of(context).size;
     const imageAspect = 360.0 / 500.0;
@@ -461,7 +632,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     double cellWidth = renderedWidth / 10;
     double cellHeight = renderedHeight / 10;
 
-    return GameUtilsOnline.getPositionOffset(position, cellWidth, cellHeight, boardPadding);
+    return GameUtilsOnline.getPositionOffset(safePosition, cellWidth, cellHeight, boardPadding);
   }
 
   void _resetGame() async {
@@ -474,6 +645,13 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     // Reset dice sync state
     _diceRollTriggers = List<String?>.filled(2, null);
     _forcedDiceValues = List<int?>.filled(2, null);
+
+    // Reset undo state
+    _canUndo = false;
+    _undoTimer?.cancel();
+    _lastOwnMove = null;
+    _undosUsed = {'0': 0, '1': 0};
+    await _loadDiamonds();
 
     // Reset token animations
     for (int i = 0; i < _tokenControllers.length; i++) {
@@ -489,6 +667,7 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
       'currentPlayerIndex': 0,
       'winner': null,
       'lastMove': null,
+      'undosUsed': {'0': 0, '1': 0},
     });
 
     setState(() {});
@@ -500,6 +679,10 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
     const double imageHeight = 500.0;
     const double imageAspect = imageWidth / imageHeight;
     const double boardPadding = 2.0;
+
+    final String playerKey = myPlayerIndex.toString();
+    final int currentUndos = _undosUsed[playerKey] ?? 0;
+    final bool isUndoEnabled = _canUndo && controller.currentPlayerIndex == myPlayerIndex && _diamonds >= 1 && currentUndos < 5;
 
     return WillPopScope(
       onWillPop: () async => false,
@@ -565,7 +748,13 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                           ]),
                           builder: (context, child) {
                             int pos = controller.playerPositions[index];
-                            List<int> playersAtPos = positionToPlayers[pos]!;
+
+                            List<int> playersAtPos = positionToPlayers[pos] ?? [index];
+
+                            if (!playersAtPos.contains(index)) {
+                              playersAtPos = List<int>.from(playersAtPos)..add(index);
+                            }
+
                             int playerCount = playersAtPos.length;
                             int myIndexInGroup = playersAtPos.indexOf(index);
 
@@ -588,14 +777,13 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                               if (myIndexInGroup < clusterPositions.length) {
                                 withinCellOffset = clusterPositions[myIndexInGroup] * offsetAmount;
                               } else {
-                                // For >4 (unlikely), stack further
                                 withinCellOffset = Offset(0, (myIndexInGroup - 3) * offsetAmount * 2);
                               }
                             }
 
                             Offset animatedDelta = _tokenAnimations[index].value;
                             double rotation = _tokenRotations[index].value;
-                            double idleScale = 0.95 + (_tokenIdleControllers[index].value * 0.1); // Subtle bob scale for 3D feel
+                            double idleScale = 0.95 + (_tokenIdleControllers[index].value * 0.1);
                             Offset finalPos = base + withinCellOffset + animatedDelta;
 
                             String animationPath = 'assets/animations/tokens/${colorNames[index]}_token.json';
@@ -634,32 +822,59 @@ class _PlayWithFriendsState extends State<PlayWithFriends> with TickerProviderSt
                 left: 20,
                 right: 20,
                 bottom: 80,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Stack(
                   children: [
-                    GameUtilsOnline.buildPlayerInfo(
-                      playerIndex: 0,
-                      label: playerNames[0],
-                      color: Colors.green,
-                      currentPlayerIndex: controller.currentPlayerIndex,
-                      autoRollDice: false,
-                      onRolled: _handleDiceRoll,
-                      profileImage: playerImages[0],
-                      myPlayerIndex: myPlayerIndex,
-                      diceRollTrigger: _diceRollTriggers[0],
-                      forcedDiceValue: _forcedDiceValues[0],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GameUtilsOnline.buildPlayerInfo(
+                          playerIndex: 0,
+                          label: playerNames[0],
+                          color: Colors.green,
+                          currentPlayerIndex: controller.currentPlayerIndex,
+                          autoRollDice: false,
+                          onRolled: _handleDiceRoll,
+                          profileImage: playerImages[0],
+                          myPlayerIndex: myPlayerIndex,
+                          diceRollTrigger: _diceRollTriggers[0],
+                          forcedDiceValue: _forcedDiceValues[0],
+                        ),
+                        GameUtilsOnline.buildPlayerInfo(
+                          playerIndex: 1,
+                          label: playerNames[1],
+                          color: Colors.red,
+                          currentPlayerIndex: controller.currentPlayerIndex,
+                          autoRollDice: false,
+                          onRolled: _handleDiceRoll,
+                          profileImage: playerImages[1],
+                          myPlayerIndex: myPlayerIndex,
+                          diceRollTrigger: _diceRollTriggers[1],
+                          forcedDiceValue: _forcedDiceValues[1],
+                        ),
+                      ],
                     ),
-                    GameUtilsOnline.buildPlayerInfo(
-                      playerIndex: 1,
-                      label: playerNames[1],
-                      color: Colors.red,
-                      currentPlayerIndex: controller.currentPlayerIndex,
-                      autoRollDice: false,
-                      onRolled: _handleDiceRoll,
-                      profileImage: playerImages[1],
-                      myPlayerIndex: myPlayerIndex,
-                      diceRollTrigger: _diceRollTriggers[1],
-                      forcedDiceValue: _forcedDiceValues[1],
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 30),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isUndoEnabled ? Colors.orange.withOpacity(0.8) : Colors.grey.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.26),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.undo, size: 20, color: Colors.white),
+                            onPressed: isUndoEnabled ? _performUndo : null,
+                            tooltip: 'Undo Move (1 💎)',
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
