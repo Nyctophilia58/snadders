@@ -47,7 +47,7 @@ class _CoinSelectionFriendsPageState extends State<CoinSelectionFriendsPage> {
       return;
     }
 
-    final gameDoc = await FirebaseFirestore.instance.collection('rooms').doc();
+    final gameDoc = FirebaseFirestore.instance.collection('rooms').doc();
     await gameDoc.set({
       'player1': {
         'coins': userData['coins'],
@@ -73,6 +73,7 @@ class _CoinSelectionFriendsPageState extends State<CoinSelectionFriendsPage> {
       'winner' : null,
       'createdAt': FieldValue.serverTimestamp(),
       'lastMove': null,
+      'undosUsed': {'0': 0, '1': 0},
     });
 
     setState(() {
