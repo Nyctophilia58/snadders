@@ -96,8 +96,7 @@ class FriendsMatchPageState extends State<FriendsMatchPage>
               _timer.cancel();
               _roomSub.cancel();
               setState(() {
-                // _coins = _coins - 100;
-                _coins = _coins;
+                _coins = _coins - 100;
               });
               widget.iapService.coinsNotifier.value = _coins;
 
